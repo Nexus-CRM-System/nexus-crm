@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+ 
+  <!-- УНИКАЛЬНАЯ ГЕОМЕТРИЯ ОКНА РУБРИКАТОРА -->
+  <style>
+    /* Двухкрыльевой сплит-контейнер */
+    .matrix-split { 
+      display: grid !important; 
+      grid-template-columns: 1fr 1fr !important; 
+      gap: 20px !important; 
+      flex: 1 !important;
+      overflow: hidden !important;
+    }
+    
+    /* Изолированные крылья под списки */
+    .matrix-wing { 
+      background: #051624 !important; 
+      border: 1px solid rgba(28, 253, 255, 0.2) !important; 
+      padding: 15px !important; 
+      border-radius: 4px !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      box-shadow: 0 0 15px rgba(4, 20, 33, 0.5) !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Зона скролла для динамических инпутов */
+    .inputs-scroll-zone { 
+      flex-grow: 1 !important; 
+      overflow-y: auto !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      gap: 8px !important; 
+      padding-right: 5px !important; 
+    }
+    .inputs-scroll-zone::-webkit-scrollbar { width: 4px !important; }
+    .inputs-scroll-zone::-webkit-scrollbar-track { background: #04141d !important; }
+    .inputs-scroll-zone::-webkit-scrollbar-thumb { background: rgba(28, 253, 255, 0.3) !important; border-radius: 3px !important; }
+    .inputs-scroll-zone::-webkit-scrollbar-thumb:hover { background: #1cfdff !important; }
+    
+    /* Фирменная оранжевая кнопка «+ ДОБАВИТЬ» */
+    .btn-plus-row { 
+      background: transparent !important; 
+      border: 1px solid #ffaa00 !important; 
+      color: #ffaa00 !important; 
+      width: 120px !important; 
+      padding: 6px 0 !important; 
+      font-family: inherit !important; 
+      font-size: 11px !important; 
+      font-weight: bold !important; 
+      cursor: pointer !important; 
+      text-transform: uppercase !important; 
+      border-radius: 4px !important; 
+      transition: all 0.2s ease-in-out !important; 
+      margin-top: 12px !important; 
+      align-self: flex-start !important; 
+      box-shadow: 0 0 5px rgba(255, 170, 0, 0.2) !important;
+    }
+    .btn-plus-row:hover { 
+      background: #ffaa00 !important; 
+      color: #040e1a !important; 
+      box-shadow: 0 0 12px #ffaa00 !important; 
+    }
+  </style>
+</head>
+
+<body>
+  <div class="full-screen-wrapper">
+    <div class="matrix-split">
+      
+      <!-- ЛЕВОЕ КРЫЛО: КАТЕГОРИИ -->
+      <div class="matrix-wing">
+        <label style="text-align: center; margin-bottom: 12px !important;">Категории</label>
+        <div class="inputs-scroll-zone" id="categoryContainer">
+          <!-- Сюда JS сгенерирует аккуратные инпуты из базы -->
+        </div>
+        <button type="button" class="btn-plus-row" onclick="addSingleInput('categoryContainer', 'Марка...')">+ Добавить</button>
+      </div>
+      
+      <!-- ПРАВОЕ КРЫЛО: ПОДКАТЕГОРИИ -->
+      <div class="matrix-wing">
+        <label style="text-align: center; margin-bottom: 12px !important;">Подкатегории</label>
+        <div class="inputs-scroll-zone" id="subcategoryContainer">
+          <!-- Сюда JS сгенерирует аккуратные инпуты из базы -->
+        </div>
+        <button type="button" class="btn-plus-row" onclick="addSingleInput('subcategoryContainer', 'Деталь...')">+ Добавить</button>
+      </div>
+
+    </div> <!-- Конец .matrix-split -->
+
+    <!-- ПОДВАЛЬНЫЙ ПОЯС УПРАВЛЕНИЯ -->
+    <div class="submit-panel">
+      <div style="display: flex; gap: 12px; align-items: center; width: 100%; position: relative;">
+        <button type="button" class="hud-btn" id="saveRubricBtn" onclick="packAndSaveRubricatorData()">Сохранить</button>
+        <button type="button" class="hud-btn" onclick="google.script.host.close()">Выйти</button>
+        
+        <!-- СЕРВЕРНЫЙ СТАТУС-ЛОАДЕР -->
+        <div id="hudRubricLoader" style="position: absolute; right: 0; color: #ffaa00; font-family: monospace; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+          СИНХРОНИЗАЦИЯ С СЕРВЕРОМ...
+        </div>
+      </div>
+    </div>
+  </div> <!-- Конец .full-screen-wrapper -->
+
+<script>
+
+// ====================================================================
+// СТАРТОВАЯ СИНХРОНИЗАЦИЯ ПРИ ЗАГРУЗКЕ ОКНА
+// ====================================================================
+  window.onload = function() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          const loader = document.getElementById('hudRubricLoader');
+          if (loader) loader.style.display = "none";
+          
+          // Разворачиваем списки строго по фактическому количеству данных из базы
+          renderDynamicInputs('categoryContainer', response.categories, 'Категория...');
+          renderDynamicInputs('subcategoryContainer', response.subcategories, 'Подкатегория...');
+        })
+        .withFailureHandler(function(err) {
+          const loader = document.getElementById('hudRubricLoader');
+          if (loader) {
+            loader.style.color = "#ff3333";
+            loader.innerText = "[ КРИТИЧЕСКИЙ СБОЙ: " + err.message + " ]";
+          }
+        })
+        .getRubricatorRawData();
+    }
+  };
+
+// ====================================================================
+// ДВИЖОК РАЗВЕРТЫВАНИЯ СТРОК ИЗ БАЗЫ ТАБЛИЦЫ
+// ====================================================================
+  function renderDynamicInputs(containerId, dataArray, placeholderText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+    
+    // Если база пустая, выведем 6 базовых полей для красивого старта, иначе — выводим ВСЁ
+    const itemsCount = (dataArray && dataArray.length > 0) ? dataArray.length : 6;
+    
+    for (let i = 0; i < itemsCount; i++) {
+      const val = (dataArray && dataArray[i]) ? dataArray[i] : "";
+      const input = document.createElement('input');
+      input.type = "text";
+      input.className = "data-payload-input"; /* Наш системный класс сбора */
+      input.value = val;
+      input.placeholder = placeholderText;
+      input.autocomplete = "off";
+      container.appendChild(input);
+    }
+  }
+
+// ====================================================================
+// ДОБАВЛЕНИЕ ОДИНОЧНОЙ СТРОКИ ПО НАЖАТИЮ НА ОРАНЖЕВЫЙ НЕОН
+// ====================================================================
+  function addSingleInput(containerId, placeholderText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const input = document.createElement('input');
+    input.type = "text";
+    input.className = "data-payload-input";
+    input.value = "";
+    input.placeholder = placeholderText;
+    input.autocomplete = "off";
+    container.appendChild(input);
+    
+    // Мягкий автоскролл вниз, чтобы новый инпут сразу был перед глазами
+    container.scrollTop = container.scrollHeight;
+  }
+
+// ====================================================================
+// ПАКЕТНЫЙ СБОРЩИК И ШЛЮЗ ДЛЯ ЗАПИСИ В ЛИСТ КОНСТАНТЫ
+// ====================================================================
+  function packAndSaveRubricatorData() {
+    const saveBtn = document.getElementById('saveRubricBtn');
+    const loader = document.getElementById('hudRubricLoader');
+    
+    if (saveBtn) saveBtn.disabled = true;
+    if (loader) {
+      loader.style.color = "#ffaa00";
+      loader.style.display = "block";
+      loader.innerText = "ОБНОВЛЕНИЕ ДАННЫХ...";
+    }
+    
+    // Фильтруем пустые строки категорий
+    const categories = [];
+    const catInputs = document.getElementById('categoryContainer').querySelectorAll('.data-payload-input');
+    catInputs.forEach(input => { 
+      if (input.value.trim() !== "") categories.push(input.value.trim()); 
+    });
+    
+    // Фильтруем пустые строки подкатегорий
+    const subcategories = [];
+    const subInputs = document.getElementById('subcategoryContainer').querySelectorAll('.data-payload-input');
+    subInputs.forEach(input => { 
+      if (input.value.trim() !== "") subcategories.push(input.value.trim()); 
+    });
+    
+    const finalPackage = {
+      categories: categories,
+      subcategories: subcategories
+    };
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (saveBtn) saveBtn.disabled = false;
+          if (response.success) {
+            if (loader) {
+              loader.style.color = "#00ff66";
+              loader.innerText = "ДАННЫЕ СОХРАНЕНЫ ✓";
+            }
+            setTimeout(function() { google.script.host.close(); }, 1200);
+          } else {
+            if (loader) loader.style.display = "none";
+            alert("Ошибка сохранения: " + response.msg);
+          }
+        })
+        .withFailureHandler(function(err) {
+          if (saveBtn) saveBtn.disabled = false;
+          if (loader) loader.style.display = "none";
+          alert("Критический сбой моста: " + err.message);
+        })
+        .saveRubricatorDataPackage(finalPackage);
+    }
+  }
+</script>
+</body>
+</html>

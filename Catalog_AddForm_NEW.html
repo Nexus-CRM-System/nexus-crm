@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+  
+  <style>
+    /* Намертво блокируем внешние сдвиги окна */
+    html, body {
+      overflow: hidden !important; 
+      height: 100vh !important;
+      width: 100vw !important;
+      box-sizing: border-box !important;
+    }
+   
+    .full-screen-wrapper {
+      box-sizing: border-box !important;
+      padding: 15px !important;
+      display: flex !important; 
+      flex-direction: column !important;
+      height: 100vh !important;
+      width: 100% !important;
+      overflow: hidden !important;
+    }
+
+    /* Адаптивная 5-колоночная матрица NEXUS с выравниванием рядов */
+    .hud-grid-block {
+      display: grid !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important; 
+      gap: 12px 10px !important; 
+      width: 100% !important;
+      box-sizing: border-box !important;
+      flex: 1;
+      overflow-y: auto !important; 
+      overflow-x: hidden !important; 
+      padding-right: 5px;
+      align-items: end !important; /* ГАРАНТИЯ: Весь ряд инпутов всегда выстроен по одной нижней линейке! */
+    }
+
+    /* Подкручиваем саму ячейку, увеличивая верхний коридор под текст */
+    .field-group {
+      display: grid !important;
+      grid-template-rows: auto 28px !important; /* Авто-высота под текст + жесткие 28px под инпут */
+      width: 100% !important;
+      box-sizing: border-box !important;
+      align-items: end !important;
+    }
+   
+    /* ИСПРАВЛЕНО: Разрешаем мягкий перенос длинных слов заголовка */
+    .field-group label {
+      margin-bottom: 2px !important;
+      padding: 0 !important;
+      line-height: 1.1 !important;
+      white-space: normal !important; /* РАЗРЕШИЛИ ПЕРЕНОС: Текст пойдет на вторую строку! */
+      word-break: break-word !important;
+      display: block !important;
+    }
+
+    /* Сдвоенные инпуты внутри жесткого коридора 28px */
+    .cyber-split-input {
+      display: grid !important;
+      grid-template-columns: 4fr 6fr !important; 
+      gap: 5px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      height: 28px !important;
+    }
+   
+    .cyber-split-input input, .cyber-split-input select { height: 28px !important; }
+   
+    /* Сетка медиа-матрицы из 10 фото (5 в ряд) */
+    .photo-grid-layout { 
+      display: grid !important; 
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important; 
+      gap: 8px !important; 
+      margin-top: 4px !important; 
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+   
+    .photo-cell { display: flex; flex-direction: column; position: relative; width: 100% !important; box-sizing: border-box !important; }
+    .photo-cell label { font-size: 10px !important; margin-bottom: 3px !important; color: rgba(28, 253, 255, 0.8) !important; text-shadow: none !important; }
+    .photo-cell .hud-btn { height: 26px !important; padding: 0 4px !important; font-size: 10px !important; width: 100% !important; }
+
+    /* ИСПРАВЛЕНО: Чистый Grid-класс для широких окон описания без наследования флексов */
+    .full-width {
+      grid-column: span 5 !important;
+      display: grid !important;
+      grid-template-rows: 18px 120px !important; /* Намертво задаем 18px под имя и 120px под просторное текстовое окно */
+      width: 100% !important;
+      box-sizing: border-box !important;
+      margin-top: 10px !important;
+      align-items: end !important;
+    }
+    
+    .full-width label { 
+      margin-bottom: 2px !important; 
+      padding: 0 !important;
+      line-height: 1.2 !important;
+      display: block !important;
+    }
+
+    /* Высота и рамки просторных окон описания и спецификаций */
+    textarea.description-box { 
+      height: 120px !important; /* Идеальные 5 строк ввода */
+      resize: none !important; 
+      width: 100% !important; 
+      background: #041620 !important;
+      border: 1px solid #1cfdff !important;
+      color: #fff !important;
+      padding: 6px 10px !important;
+      font-family: inherit !important;
+      font-size: 12px !important;
+      box-sizing: border-box !important;
+      border-radius: 2px !important;
+    }
+
+        /* КИБЕР-МОДАЛЬНОЕ ОКНО ЗАПРОСА NEXUS */
+    .nexus-prompt-overlay {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      background: rgba(4, 20, 29, 0.85) !important;
+      backdrop-filter: blur(4px) !important; /* Размытие заднего плана */
+      z-index: 100000 !important;
+      display: none; /* По умолчанию скрыто */
+      justify-content: center !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+    }
+    
+    .nexus-prompt-window {
+      background: #061e2a !important;
+      border: 1px solid #1cfdff !important;
+      box-shadow: 0 0 20px rgba(28, 253, 255, 0.25) !important;
+      padding: 20px !important;
+      width: 420px !important; /* Увеличили с 380px до 420px под три кнопки */
+      border-radius: 4px !important;
+      box-sizing: border-box !important;
+      font-family: inherit !important;
+    }
+
+    .nexus-prompt-text {
+      font-size: 12px !important;
+      line-height: 1.4 !important;
+      color: #fff !important;
+      margin-bottom: 12px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+    
+    .nexus-prompt-input {
+      width: 100% !important;
+      height: 28px !important;
+      background: #04141d !important;
+      border: 1px solid rgba(28, 253, 255, 0.4) !important;
+      color: #fff !important;
+      padding: 0 8px !important;
+      font-size: 12px !important;
+      box-sizing: border-box !important;
+      margin-bottom: 15px !important;
+      border-radius: 2px !important;
+    }
+    .nexus-prompt-input:focus { border-color: #1cfdff !important; outline: none !important; box-shadow: 0 0 8px rgba(28, 253, 255, 0.4) !important; }
+    
+    .nexus-prompt-buttons { display: flex !important; gap: 10px !important; justify-content: flex-end !important; }
+    .nexus-prompt-buttons .hud-btn { height: 26px !important; padding: 0 15px !important; font-size: 11px !important; width: auto !important; }
+
+        /* УНИКАЛЬНАЯ СТИЛИЗАЦИЯ КНОПОК МИКРО-ОКНА NEXUS */
+    .nexus-btn-pc {
+      background: #ffaa00 !important;
+      border: 1px solid #ffaa00 !important;
+      color: #04141d !important; /* Черный читаемый текст на янтарном фоне */
+      font-weight: 700 !important;
+      box-shadow: 0 0 10px rgba(255, 170, 0, 0.3) !important;
+    }
+    .nexus-btn-pc:hover {
+      background: #ffbc33 !important;
+      box-shadow: 0 0 15px rgba(255, 170, 0, 0.6) !important;
+    }
+
+    .nexus-btn-ok {
+      background: #1cfdff !important;
+      border: 1px solid #1cfdff !important;
+      color: #04141d !important; /* Черный читаемый текст на бирюзовом фоне */
+      font-weight: 700 !important;
+      box-shadow: 0 0 10px rgba(28, 253, 255, 0.3) !important;
+    }
+    .nexus-btn-ok:hover {
+      background: #5effff !important;
+      box-shadow: 0 0 15px rgba(28, 253, 255, 0.6) !important;
+    }
+
+    .nexus-btn-cancel {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .nexus-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #fff !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+  </style>
+
+</head>
+
+<body>
+  <form id="hudAddForm" onsubmit="submitForm(event)">
+  <!-- СКРЫТЫЙ БРОНЕБОЙНЫЙ ИДЕНТИФИКАТОР СТРОГО ДЛЯ КОЛОНКИ А -->
+  <input type="hidden" name="system_id_hidden" id="system_id_hidden">
+  
+  <div class="full-screen-wrapper">
+  <div class="hud-grid-block">
+  
+  <!-- 1. Тип -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="record_type" id="dyn_record_type"></select>
+  </div>
+  
+  <!-- 2-3. Тип кода и Значение кода (Сдвоенный инпут с микро-коррекцией) -->
+  <div class="field-group" style="padding-top: 2px !important;">
+    <label>&nbsp;</label>
+    <div class="cyber-split-input">
+    <select name="vid_id" id="dyn_vid_id"></select>
+    <input type="text" name="item_id_val" placeholder="Номер..." autocomplete="off">
+    </div>
+  </div>
+  
+  <!-- 4. Наименование -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="name" required autocomplete="off">
+  </div>
+  
+  <!-- 5. Бренд -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="brand" autocomplete="off">
+  </div>
+  
+  <!-- 6. Артикул -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="sku" autocomplete="off">
+  </div>
+  
+  <!-- 7. Штрихкод -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="barcode" autocomplete="off">
+  </div>
+
+  <!-- 8. Категория -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="category" id="dyn_category"></select>
+  </div>
+  
+  <!-- 9. Подкатегория -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="subcategory" id="dyn_subcategory"></select>
+  </div>
+
+  <!-- 10. Группа -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="group" list="existingGroupsList" placeholder="Выберите группу">
+  <datalist id="existingGroupsList"></datalist>
+  </div>
+
+  <!-- 11. Модификация -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="mod" list="existingModsList" placeholder="Выберите модификацию">
+  <datalist id="existingModsList"></datalist>
+  </div>
+
+  <!-- 12-13. Количество / Ед. изм. -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <div class="cyber-split-input" style="direction: rtl;">
+  <select name="unit" id="dyn_unit" style="direction: ltr;"></select>
+  <input type="text" name="stock" placeholder="0" oninput="cyberInt(this)" autocomplete="off" style="direction: ltr;">
+  </div>
+  </div>
+
+  <!-- 14. Мин. остаток -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="min_stock" placeholder="0" oninput="cyberInt(this)" autocomplete="off">
+  </div>
+
+  <!-- 16. Год выпуска -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="year" placeholder="гггг" autocomplete="off">
+  </div>
+
+  <!-- 17. Гарантийный срок -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <div class="cyber-split-input" style="direction: rtl;">
+  <select name="warranty_unit" id="dyn_warranty" style="direction: ltr;"></select>
+  <input type="text" name="warranty_num" placeholder="0" oninput="cyberInt(this)" autocomplete="off" style="direction: ltr;">
+  </div>
+  </div>
+
+  <!-- 18. Вес / Объем -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <div class="cyber-split-input" style="direction: rtl;">
+  <select name="weight_unit" id="dyn_weight" style="direction: ltr;"></select>
+  <input type="text" name="weight_num" placeholder="0.0" oninput="cyberFloat(this)" autocomplete="off" style="direction: ltr;">
+  </div>
+  </div>
+
+  <!-- 19. Цена закупа -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="price_buy" placeholder="0.00" oninput="cyberFloat(this)" autocomplete="off">
+  </div>
+
+  <!-- 20. Цена опт -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="price_opt" placeholder="0.00" oninput="cyberFloat(this)" autocomplete="off">
+  </div>
+
+  <!-- 21. Цена розница -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="price_retail" placeholder="0.00" oninput="cyberFloat(this)" autocomplete="off">
+  </div>
+
+  <!-- 22. Себестоимость -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="prod_cost" placeholder="0.00" oninput="cyberFloat(this)" autocomplete="off">
+  </div>
+
+  <!-- 23. Валюта -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="currency" id="dyn_currency"></select>
+  </div>
+
+  <!-- 24. Норма времени -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <div class="cyber-split-input" style="direction: rtl;">
+  <select name="time_norm_unit" id="dyn_time_norm" style="direction: ltr;"></select>
+  <input type="text" name="time_norm" placeholder="0" oninput="cyberInt(this)" autocomplete="off" style="direction: ltr;">
+  </div>
+  </div>
+  
+  <!-- 25. Длительность услуги -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <div class="cyber-split-input" style="direction: rtl;">
+  <select name="duration_unit" id="dyn_duration" style="direction: ltr;"></select>
+  <input type="text" name="duration_num" placeholder="0" oninput="cyberInt(this)" autocomplete="off" style="direction: ltr;">
+  </div>
+  </div>
+  
+  <!-- 15. Ячейка хранения -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <input type="text" name="cell" autocomplete="off">
+  </div>
+  
+  <!-- 27. Тип калькуляции -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="calc_type" id="dyn_calc_type"></select>
+  </div>
+  
+  <!-- 28. Ответственный -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="responsible" id="dyn_responsible"></select>
+  </div>
+  
+  <!-- 27. Поставщик -->
+  <div class="field-group">
+  <label>&nbsp;</label>
+  <select name="supplier" id="dyn_supplier"></select>
+  </div>
+
+   <!-- 28. Ставка НДС -->
+  <div class="field-group">
+    <label>&nbsp;</label>
+    <select name="vat_rate" id="dyn_vat_rate">
+    </select>
+  </div>
+  
+  <!-- 28. Спецификация / Состав изделия -->
+  <div class="full-width">
+    <label>&nbsp;</label>
+    <textarea name="specification" class="description-box" placeholder="Компоненты сырья, комплектация..."></textarea>
+  </div>
+  
+  <!-- 29. Техническое описание -->
+  <div class="full-width">
+    <label>&nbsp;</label>
+    <textarea name="description" class="description-box" placeholder="Введите описание..."></textarea>
+  </div>
+
+  <!-- 30. Модернизированная медиа-матрица с автозагрузкой файлов (Сетка 5х2) -->
+  <div class="full-width field-group-full-width">
+  <div class="context-title-sub">Загрузка изображений:</div>
+  <div class="photo-grid-layout">
+  
+  <!-- ЯЧЕЙКА 01 -->
+  <div class="photo-cell">
+  <label>IMG 01 (Главное)</label>
+  <input type="file" id="file_01" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_01', 'btn_01')">
+  <input type="hidden" name="img_01" id="img_01">
+  <button type="button" id="btn_01" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(1)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('01')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 02 -->
+  <div class="photo-cell">
+  <label>IMG 02</label>
+  <input type="file" id="file_02" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_02', 'btn_02')">
+  <input type="hidden" name="img_02" id="img_02">
+  <button type="button" id="btn_02" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(2)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('02')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 03 -->
+  <div class="photo-cell">
+  <label>IMG 03</label>
+  <input type="file" id="file_03" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_03', 'btn_03')">
+  <input type="hidden" name="img_03" id="img_03">
+  <button type="button" id="btn_03" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(3)">Выбрать файл</button>
+
+  <span class="nexus-delete-x" onclick="clearMediaSlot('03')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 04 -->
+  <div class="photo-cell">
+  <label>IMG 04</label>
+  <input type="file" id="file_04" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_04', 'btn_04')">
+  <input type="hidden" name="img_04" id="img_04">
+  <button type="button" id="btn_04" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(4)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('04')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 05 -->
+  <div class="photo-cell">
+  <label>IMG 05</label>
+  <input type="file" id="file_05" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_05', 'btn_05')">
+  <input type="hidden" name="img_05" id="img_05">
+  <button type="button" id="btn_05" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(5)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('05')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 06 -->
+  <div class="photo-cell">
+  <label>IMG 06</label>
+  <input type="file" id="file_06" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_06', 'btn_06')">
+  <input type="hidden" name="img_06" id="img_06">
+  <button type="button" id="btn_06" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(6)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('06')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 07 -->
+  <div class="photo-cell">
+  <label>IMG 07</label>
+  <input type="file" id="file_07" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_07', 'btn_07')">
+  <input type="hidden" name="img_07" id="img_07">
+  <button type="button" id="btn_07" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(7)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('07')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 08 -->
+  <div class="photo-cell">
+  <label>IMG 08</label>
+  <input type="file" id="file_08" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_08', 'btn_08')">
+  <input type="hidden" name="img_08" id="img_08">
+  <button type="button" id="btn_08" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(8)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('08')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 09 -->
+  <div class="photo-cell">
+  <label>IMG 09</label>
+  <input type="file" id="file_09" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_09', 'btn_09')">
+  <input type="hidden" name="img_09" id="img_09">
+  <button type="button" id="btn_09" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(9)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('09')">×</span>
+  </div>
+
+  <!-- ЯЧЕЙКА 10 -->
+  <div class="photo-cell">
+  <label>IMG 10</label>
+  <input type="file" id="file_10" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'img_10', 'btn_10')">
+  <input type="hidden" name="img_10" id="img_10">
+  <button type="button" id="btn_10" class="hud-btn" style="padding: 6px; font-size: 11px; width: 100%;" onclick="selectPhotoWorkflow(10)">Выбрать файл</button>
+  <span class="nexus-delete-x" onclick="clearMediaSlot('10')">×</span>
+  </div>
+  </div>
+  </div>
+
+  <!-- 30. Комментарий (Служебные заметки) -->
+  <div class="full-width">
+    <label>&nbsp;</label>
+    <textarea name="comment" class="description-box" placeholder="Внесите дополнительные заметки..."></textarea>
+  </div>
+  </div> <!-- Закрываем .hud-grid-block -->
+
+  <!-- ФИНАЛЬНАЯ ПАНЕЛЬ С КНОПКАМИ И КОНСОЛЬЮ СТАТУСОВ -->
+  <div class="submit-panel">
+  <div style="display: flex; gap: 12px;">
+  <button type="submit" class="hud-btn" id="submitBtn">Сохранить</button>
+  <button type="button" class="hud-btn" onclick="resetFormWithMsg()">Сбросить форму</button>
+  <button type="button" class="hud-btn" onclick="google.script.host.close()">Выйти</button>
+  </div>
+  <div id="hudStatusConsole" style="color: #1cfdff; font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding-right: 15px; text-shadow: 0 0 8px rgba(28, 253, 255, 0.6); transition: all 0.3s ease; opacity: 0;"></div>
+  </div>
+
+  <!-- ТЕКСТ-ЛОАДЕР NEXUS -->
+  <div id="hudFormLoader" style="display: none; position: fixed; right: 28px; bottom: 33px; color: #ffaa00; font-family: monospace; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; z-index: 9999; pointer-events: none;">
+  ЗАГРУЗКА ДАННЫХ... ПОДОЖДИТЕ
+  </div>
+  </div> <!-- .full-screen-wrapper -->
+
+  <!-- ХАЙ-ТЕК ОКНО ЗАПРОСА МЕДИА-ПОТОКА NEXUS (ВЕРСИЯ 2.0) -->
+  <div class="nexus-prompt-overlay" id="nexusPromptModal">
+    <div class="nexus-prompt-window">
+      <div class="nexus-prompt-text" style="font-size: 11px !important; letter-spacing: 0.8px !important; margin-bottom: 15px !important;">
+        Вставьте интернет-ссылку на фото, или загрузите файл с ПК через <span style="color:#1cfdff; font-weight:bold;">"Мой компьютер"</span>:
+      </div>
+      <input type="text" class="nexus-prompt-input" id="nexusPromptInputField" autocomplete="off" placeholder="https://site.ru">
+        <div class="nexus-prompt-buttons" style="display: flex !important; gap: 10px !important; justify-content: flex-end !important; width: 100% !important;">
+        <!-- Три монолитные кнопки в один ряд с идеальным контрастом текста -->
+        <button type="button" class="hud-btn nexus-btn-pc" onclick="triggerPcFolderUploadWorkflow()">МОЙ КОМПЬЮТЕР</button>
+        <button type="button" id="nexusPromptOkBtn" class="hud-btn nexus-btn-ok" onclick="processNexusCustomPromptResult(event)">ПОДТВЕРДИТЬ</button>
+        <button type="button" class="hud-btn nexus-btn-cancel" onclick="closeNexusCustomPrompt()">ОТМЕНА</button>
+      </div>
+    </div>
+  </div>
+
+  </form>
+
+<script>
+
+// ====================================================================
+// СТАРТОВАЯ ИНИЦИАЛИЗАЦИЯ И ДИНАМИЧЕСКИЙ ПЕРЕВОД ПОДПИСЕЙ ИЗ КОНСТАНТ
+// ====================================================================
+window.onload = function() {
+  const formElement = document.getElementById('hudAddForm');
+  var editRow = "<?= editRowNumber ?>";
+  
+  if (!editRow || editRow === "0") {
+    if (formElement) formElement.reset();
+  }
+  
+  // Гарантируем свободу вертикального скролла на уровне браузера
+  document.body.style.overflowY = "auto";
+  document.body.style.height = "auto";
+  
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    runHudCascade(["Инициализация матрицы CRM...", "Синхронизация карты метаданных"], "#00f3ff");
+    
+    google.script.run
+      .withSuccessHandler(function(constants) {
+        populateSelects(constants);
+        
+        const map = constants.catalog_map;
+        if (map) {
+          // ВСЕЯДНЫЙ ПЕРЕВОДЧИК: Ищет заголовки и в обычных .field-group, и в широких .full-width
+          const applyLabel = (inputName, labelText) => {
+            const input = formElement.elements[inputName];
+            if (input) {
+              const group = input.closest('.field-group') || input.closest('.full-width');
+              if (group) {
+                const lbl = group.querySelector('label');
+                if (lbl) lbl.textContent = labelText;
+              }
+            }
+          };
+
+          // Раскладываем чистые имена полей
+          applyLabel('record_type', map.record_type.label);
+          applyLabel('name', map.name.label);
+          applyLabel('brand', map.brand.label);
+          applyLabel('sku', map.sku.label);
+          applyLabel('barcode', map.barcode.label);
+          applyLabel('category', map.category.label);
+          applyLabel('subcategory', map.subcategory.label);
+          applyLabel('group', map.group.label);
+          applyLabel('mod', map.modification.label);
+          
+          applyLabel('stock', map.stock_qty.label);
+          applyLabel('min_stock', map.min_stock_qty.label);
+          applyLabel('year', map.production_year.label);
+          applyLabel('warranty_num', map.warranty_val.label);
+          applyLabel('weight_num', map.weight_val.label);
+          
+          applyLabel('price_buy', map.price_buy.label);
+          applyLabel('price_opt', map.price_wholesale.label);
+          applyLabel('price_retail', map.price_retail.label);
+          applyLabel('prod_cost', map.production_cost.label);
+          applyLabel('currency', map.currency.label);
+          
+          applyLabel('time_norm', map.time_norm_val.label);
+          applyLabel('duration_num', map.duration_val.label);
+          
+          applyLabel('cell', map.warehouse_cell.label);
+          applyLabel('calc_type', map.calc_type.label);
+          applyLabel('responsible', map.responsible_user.label);
+          applyLabel('supplier', map.vendor_supplier.label);
+          applyLabel('vat_rate', map.vat_rate.label);
+          
+          // Длинные блоки подвала
+          applyLabel('specification', map.specification.label);
+          applyLabel('description', map.description.label);
+          applyLabel('comment', map.internal_comment.label);
+          
+          // Изолированный перевод для сдвоенного поля идентификаторов
+          const idInput = formElement.elements['item_id_val'];
+          if (idInput) {
+            const idGroup = idInput.closest('.field-group');
+            if (idGroup) {
+              const idLabel = idGroup.querySelector('label');
+              if (idLabel) {
+                idLabel.textContent = map.code_type.label + " / " + map.code_value.label;
+              }
+            }
+          }
+        }
+        
+        // Если открыт режим правки — подгружаем данные строки
+        if (editRow && editRow !== "0") {
+          const formLoader = document.getElementById('hudFormLoader');
+          if (formLoader) formLoader.style.display = "block";
+          
+          runHudCascade(["РЕЖИМ ПРАВКИ: РАЗВЕРТЫВАНИЕ СТРОКИ " + editRow], "#ffaa00");
+          
+          google.script.run
+            .withSuccessHandler(function(rowData) {
+              fillFormFieldsForEditing(rowData);
+              if (formLoader) formLoader.style.display = "none";
+            })
+            .getTableRowDataByRowIndex(Number(editRow));
+        }
+      })
+      .withFailureHandler(function(err) {
+        runHudCascade(["КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ", err.message], "#ff3333");
+      })
+      .getConstantsForForm();
+
+    // СБОР УНИКАЛЬНЫХ ПОДСКАЗОК ДЛЯ ГРУПП И МОДИФИКАЦИЙ
+    google.script.run
+      .withSuccessHandler(function(suggestions) {
+        if (!suggestions) return;
+        const groupDataList = document.getElementById('existingGroupsList');
+        if (groupDataList && suggestions.groups) {
+          groupDataList.innerHTML = "";
+          suggestions.groups.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            groupDataList.appendChild(option);
+          });
+        }
+        const modDataList = document.getElementById('existingModsList');
+        if (modDataList && suggestions.mods) {
+          modDataList.innerHTML = "";
+          suggestions.mods.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            modDataList.appendChild(option);
+          });
+        }
+      })
+      .getUniqueGroupsAndModifications();
+  }
+};
+
+// ====================================================================
+// ФУНКЦИЯ ДИНАМИЧЕСКОЙ РАСКЛАДКИ ДАННЫХ ПРИ ПРАВКЕ ПОЗИЦИИ
+// ====================================================================
+function fillFormFieldsForEditing(rowData) {
+  if (!rowData) return;
+  const form = document.getElementById('hudAddForm');
+  if (!form) return;
+  
+  // Автоматически распределяем данные по совпадениям имен инпутов формы
+  for (let key in rowData) {
+    if (form.elements[key]) {
+      form.elements[key].value = rowData[key];
+    }
+  }
+  
+  // Точечные сопоставления под новые латинские системные ID констант
+  if (rowData.modification && form.elements['mod']) form.elements['mod'].value = rowData.modification;
+  if (rowData.stock_qty && form.elements['stock']) form.elements['stock'].value = rowData.stock_qty;
+  if (rowData.min_stock_qty && form.elements['min_stock']) form.elements['min_stock'].value = rowData.min_stock_qty;
+  if (rowData.production_year && form.elements['year']) form.elements['year'].value = rowData.production_year;
+  if (rowData.warranty_val && form.elements['warranty_num']) form.elements['warranty_num'].value = rowData.warranty_val;
+  if (rowData.weight_val && form.elements['weight_num']) form.elements['weight_num'].value = rowData.weight_val;
+  if (rowData.price_wholesale && form.elements['price_opt']) form.elements['price_opt'].value = rowData.price_wholesale;
+  if (rowData.production_cost && form.elements['prod_cost']) form.elements['prod_cost'].value = rowData.production_cost;
+  if (rowData.time_norm_val && form.elements['time_norm']) form.elements['time_norm'].value = rowData.time_norm_val;
+  if (rowData.duration_val && form.elements['duration_num']) form.elements['duration_num'].value = rowData.duration_val;
+  if (rowData.responsible_user && form.elements['responsible']) form.elements['responsible'].value = rowData.responsible_user;
+  if (rowData.warehouse_cell && form.elements['cell']) form.elements['cell'].value = rowData.warehouse_cell;
+  if (rowData.internal_comment && form.elements['comment']) form.elements['comment'].value = rowData.internal_comment;
+  if (rowData.vendor_supplier && form.elements['supplier']) form.elements['supplier'].value = rowData.vendor_supplier;
+  if (rowData.vat_rate && form.elements['vat_rate']) form.elements['vat_rate'].value = rowData.vat_rate;
+  if (rowData.code_type) form.elements['vid_id'].value = rowData.code_type;
+  if (rowData.code_value) form.elements['item_id_val'].value = rowData.code_value;
+
+  
+  // Ювелирно разбираем матрицу изображений из поля photos_raw
+  if (rowData.photos_raw) {
+    try {
+      var photosArr = JSON.parse(rowData.photos_raw);
+      if (Array.isArray(photosArr)) {
+        photosArr.forEach((url, index) => {
+          var imgNum = index + 1;
+          var idName = 'img_' + (imgNum < 10 ? '0' + imgNum : imgNum);
+          var btnId = 'btn_' + (imgNum < 10 ? '0' + imgNum : imgNum);
+          var hiddenInput = document.getElementById(idName);
+          var btn = document.getElementById(btnId);
+          
+          if (hiddenInput && url) {
+            hiddenInput.value = url;
+            if (btn) {
+              btn.textContent = "ГОТОВО ✓";
+              btn.style.borderColor = "#00ff66";
+              btn.style.color = "#00ff66";
+              
+              const cell = btn.parentElement;
+              if (cell) {
+                const xBtn = cell.querySelector('.nexus-delete-x');
+                if (xBtn) xBtn.style.display = "block";
+              }
+            }
+          }
+        });
+      }
+    } catch(e) {
+      // Поддержка старых одиночных ссылок, если в ячейке не JSON
+      var hiddenInput01 = document.getElementById('img_01');
+      var btn01 = document.getElementById('btn_01');
+      if (hiddenInput01 && rowData.photos_raw !== "") {
+        hiddenInput01.value = rowData.photos_raw;
+        if (btn01) {
+          btn01.textContent = "ГОТОВО ✓";
+          btn01.style.borderColor = "#00ff66";
+          btn01.style.color = "#00ff66";
+        }
+      }
+    }
+  }
+  runHudCascade(["МАТРИЦА ХАРАКТЕРИСТИК УСПЕШНО РАЗВЕРНУТА"], "#00ff66");
+}
+
+// ====================================================================
+// АВТОМАТИЧЕСКОЕ НАПОЛНЕНИЕ ВЫПАДАЮЩИХ СПИСКОВ ИЗ БАЗЫ КОНСТАНТ
+// ====================================================================
+function populateSelects(constants) {
+  if (!constants) return;
+  
+  const mappings = {
+    'dyn_record_type': constants.record_types,
+    'dyn_vid_id': constants.vid_ids,
+    'dyn_status': constants.statuses,
+    'dyn_currency': constants.currencies,
+    'dyn_calc_type': constants.calc_types,
+    'dyn_unit': constants.units_qty, 
+    'dyn_weight': constants.units_weight, 
+    'dyn_warranty': constants.units_warranty, 
+    'dyn_time_norm': constants.units_time_norm, 
+    'dyn_duration': constants.units_duration,
+    'dyn_vat_rate': constants.vat_rate 
+  };
+
+  for (let id in mappings) {
+    const select = document.getElementById(id);
+    if (!select) continue;
+    select.innerHTML = '';
+    select.style.color = '#fff';
+    
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = '';
+    select.appendChild(emptyOpt);
+    if (mappings[id]) {
+      mappings[id].forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+  }
+
+  const protectedFields = {
+    'dyn_category': { data: constants.categories, msg: 'КАТЕГОРИИ НЕ ДОБАВЛЕНЫ' },
+    'dyn_subcategory': { data: constants.subcategories, msg: 'ПОДКАТЕГОРИИ НЕ ДОБАВЛЕНЫ' },
+    'dyn_responsible': { data: constants.responsibles, msg: 'СОТРУДНИКИ НЕ ДОБАВЛЕНЫ' },
+    'dyn_supplier': { data: constants.suppliers, msg: 'ПОСТАВЩИКИ НЕ ДОБАВЛЕНЫ' }
+  };
+
+  for (let id in protectedFields) {
+    const select = document.getElementById(id);
+    if (!select) continue;
+    select.innerHTML = '';
+    select.style.color = '#fff';
+    
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = '';
+    select.appendChild(emptyOpt);
+    
+    const currentData = protectedFields[id].data;
+    if (currentData && currentData.length > 0) {
+      currentData.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+    } else {
+      const alertOpt = document.createElement('option');
+      alertOpt.value = '';
+      alertOpt.textContent = protectedFields[id].msg;
+      alertOpt.style.color = '#ffaa00';
+      alertOpt.disabled = true;
+      select.appendChild(alertOpt);
+    }
+  }
+  
+  if (typeof showHudConsoleMessage === 'function') {
+    showHudConsoleMessage("Интерфейс CRM полностью готов к безопасной работе", false);
+  }
+}
+
+// ====================================================================
+// ЖЕЛЕЗОБЕТОННЫЙ ДВИЖОК СБОРА И УМНОГО СОХРАНЕНИЯ (БЕЗОПАСНАЯ ПЕРЕЗАПИСЬ)
+// ====================================================================
+function submitForm(event) {
+  event.preventDefault(); 
+  
+  const formElement = document.getElementById('hudAddForm');
+  const saveBtn = document.getElementById('submitBtn');
+  
+  if (!formElement || !saveBtn) return;
+  saveBtn.disabled = true;
+  
+  var editRow = "<?= editRowNumber ?>";
+  var isEditMode = (editRow && editRow !== "0");
+  const formLoader = document.getElementById('hudFormLoader');
+  
+  if (formLoader) {
+    formLoader.style.color = "#ffaa00";
+    formLoader.innerText = isEditMode ? "ОБНОВЛЕНИЕ ДАННЫХ..." : "ЗАПИСЬ ДАННЫХ В КАТАЛОГ...";
+    formLoader.style.display = "block";
+  }
+
+  const formData = new FormData(formElement);
+  const payload = {};
+  formData.forEach((value, key) => { payload[key] = value; });
+
+  // Сборка массива фотографий из медиа-матрицы
+  const photosArray = [];
+  for (let i = 1; i <= 10; i++) {
+    const idName = 'img_' + (i < 10 ? '0' + i : i);
+    const hiddenInput = document.getElementById(idName);
+    if (hiddenInput && hiddenInput.value) {
+      const cleanUrl = hiddenInput.value.toString().trim();
+      if (cleanUrl !== "") photosArray.push(cleanUrl);
+    }
+    delete payload[idName];
+  }
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    if (isEditMode) {
+      // РЕЖИМ ПРАВКИ: Достаем оригинальный ID позиции из скрытого инпута
+      var currentItemId = payload['system_id_hidden'];
+      
+      payload['item_id'] = payload['system_id_hidden']; 
+      payload['item_id_val'] = payload['item_id_val'];
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          saveBtn.disabled = false;
+          if (response.success) {
+            if (formLoader) {
+              formLoader.style.color = "#00ff66";
+              formLoader.innerText = "ДАННЫЕ УСПЕШНО ИНТЕГРИРОВАНЫ ✓";
+            }
+            setTimeout(function() { google.script.host.close(); }, 1200);
+          } else {
+            if (formLoader) formLoader.style.display = "none";
+            alert("Ошибка обновления: " + response.msg);
+          }
+        })
+        .withFailureHandler(function(err) {
+          saveBtn.disabled = false;
+          if (formLoader) formLoader.style.display = "none";
+          alert("Критический сбой сетевого моста: " + err.message);
+        })
+        .updateCatalogCardData(currentItemId, payload, photosArray);
+        
+    } else {
+      // РЕЖИМ СОЗДАНИЯ ТОВАРА: Стандартный шлюз
+      payload['photo_raw'] = JSON.stringify(photosArray);
+      payload['item_id'] = payload['item_id_val'];
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          saveBtn.disabled = false;
+          if (formLoader) {
+            formLoader.style.color = "#00ff66";
+            formLoader.innerText = "ПОЗИЦИЯ ИНТЕГРИРОВАНА ✓";
+            setTimeout(function() { formLoader.style.display = "none"; }, 2000);
+          }
+          resetFormWithMsg();
+        })
+        .withFailureHandler(function(err) {
+          saveBtn.disabled = false;
+          if (formLoader) formLoader.style.display = "none";
+          alert("Сбой сохранения новой карточки: " + err.message);
+        })
+        .saveCatalogCard(payload);
+    }
+  }
+}
+
+// ====================================================================
+// КИБЕР-МАСКИ ДЛЯ ФИЛЬТРАЦИИ СИМВОЛОВ НА ЛЕТУ
+// ====================================================================
+function cyberInt(input) {
+  input.value = input.value.replace(/[^0-9]/g, '');
+}
+
+function cyberFloat(input) {
+  let val = input.value.replace(/,/g, '.');
+  val = val.replace(/[^0-9.]/g, '');
+  const parts = val.split('.');
+  if (parts.length > 2) {
+    val = parts[0] + '.' + parts.slice(1).join('');
+  }
+  input.value = val;
+}
+
+// ====================================================================
+// МОДЕРНИЗИРОВАННЫЙ ДВИЖОК ПОЛНОЙ ОЧИСТКИ ФОРМЫ И МЕДИА-МАТРИЦЫ
+// ====================================================================
+function resetFormWithMsg() {
+  const formElement = document.getElementById('hudAddForm');
+  if (!formElement) return;
+  
+  formElement.reset();
+  
+  const textAreas = formElement.querySelectorAll('textarea.description-box');
+  textAreas.forEach(area => {
+    area.value = '';
+  });
+  
+  for (let i = 1; i <= 10; i++) {
+    const hiddenInput = document.getElementById('img_' + (i < 10 ? '0' + i : i));
+    if (hiddenInput) hiddenInput.value = '';
+  }
+  
+  const allPhotoButtons = formElement.querySelectorAll('.photo-cell button');
+  allPhotoButtons.forEach(btn => {
+    btn.disabled = false;
+    btn.textContent = "ВЫБРАТЬ ФАЙЛ";
+    btn.style.borderColor = "#1cfdff";
+    btn.style.color = "#1cfdff";
+    
+    // Скрываем крестики при сбросе
+    const cell = btn.parentElement;
+    if (cell) {
+      const xBtn = cell.querySelector('.nexus-delete-x');
+      if (xBtn) xBtn.style.display = "none";
+    }
+  });
+
+  const itemIdField = formElement.elements['item_id'];
+  if (itemIdField) {
+    itemIdField.disabled = false;
+    itemIdField.placeholder = "";
+  }
+  
+  if (typeof showHudConsoleMessage === 'function') {
+    showHudConsoleMessage("Форма очищена", false);
+  }
+}
+
+// ====================================================================
+// ФИРМЕННЫЙ КАСКАДНЫЙ HUD-ИНФОРМАТОР
+// ====================================================================
+function runHudCascade(lines, color = "#00f3ff") {
+  const consoleContainer = document.getElementById('hudConsoleLinesContainer');
+  if (!consoleContainer) return;
+  
+  consoleContainer.innerHTML = '';
+  if (lines && lines.length > 0) {
+    lines.forEach((text, index) => {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'hud-console-line';
+      lineDiv.style.color = color;
+      lineDiv.style.animationDelay = (index * 0.4) + 's';
+      lineDiv.textContent = `${text.toUpperCase()}`;
+      consoleContainer.appendChild(lineDiv);
+    });
+  }
+}
+
+// ====================================================================
+// СКОРОСТНОЙ СКРИПТ АВТОСЖАТИЯ И ЗАГРУЗКИ КАРТИНОК НА ДИСК
+// ====================================================================
+function handleFileUpload(inputElement, hiddenInputId, buttonId) {
+  const file = inputElement.files[0]; 
+  const btn = document.getElementById(buttonId);
+  const hiddenInput = document.getElementById(hiddenInputId);
+  
+  if (!file || !btn || !hiddenInput) return;
+  btn.disabled = true;
+  btn.textContent = "СЖАТИЕ...";
+  
+  if (typeof showConsoleMessage === 'function') {
+    showConsoleMessage("ОПТИМИЗАЦИЯ И СЖАТИЕ ИЗОБРАЖЕНИЯ... ", false);
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const MAX_WIDTH = 1024;
+      const MAX_HEIGHT = 1024;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+      btn.textContent = "ЗАГРУЗКА...";
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (response && response.success) {
+              hiddenInput.value = response.url;
+              btn.disabled = false;
+              btn.textContent = "ГОТОВО ✓";
+              btn.style.borderColor = "#00ff66";
+              btn.style.color = "#00ff66";
+              
+              const cell = btn.parentElement;
+              if (cell) {
+                const xBtn = cell.querySelector('.nexus-delete-x');
+                if (xBtn) xBtn.style.display = "block";
+              }
+            } else {
+              btn.disabled = false;
+              btn.textContent = "ОШИБКА";
+              alert("Ошибка Drive: " + response.msg);
+            }
+          })
+          .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.textContent = "СБОЙ СЕТИ";
+            alert("Сбой моста загрузки: " + err.message);
+          })
+          .uploadCatalogPhotoToServer(compressedBase64, file.name);
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+
+// ====================================================================
+// УМНЫЙ ДВУХРЕЖИМНЫЙ ЗАГРУЗЧИК МЕДИА-МАТРИЦЫ (ФАЙЛ / ССЫЛКА ИЗ СЕТИ)
+// ====================================================================
+var currentActivePhotoSlot = null;
+
+function selectPhotoWorkflow(num) {
+  currentActivePhotoSlot = num;
+  const modal = document.getElementById('nexusPromptModal');
+  const input = document.getElementById('nexusPromptInputField');
+  
+  if (modal && input) {
+    input.value = ""; // Зачищаем старый след в инпуте
+    modal.style.display = "flex"; // Разворачиваем оверлей по центру
+    input.focus(); // Ставим курсор в фокус ввода
+    
+    document.getElementById('nexusPromptOkBtn').onclick = function(e) {
+      processNexusCustomPromptResult(e);
+    };
+    
+    input.onkeydown = function(e) {
+      if (e.key === "Enter") {
+        processNexusCustomPromptResult(e);
+      }
+    };
+  }
+}
+
+// ====================================================================
+// ???
+// ====================================================================
+function closeNexusCustomPrompt() {
+  const modal = document.getElementById('nexusPromptModal');
+  if (modal) modal.style.display = "none";
+  currentActivePhotoSlot = null;
+}
+
+// ====================================================================
+// ДЕЙСТВИЕ 1: Менеджер нажал желтую кнопку "МОЙ КОМПЬЮТЕР"
+// ====================================================================
+function triggerPcFolderUploadWorkflow() {
+  if (currentActivePhotoSlot === null) return;
+  var idIdx = currentActivePhotoSlot < 10 ? '0' + currentActivePhotoSlot : currentActivePhotoSlot;
+  
+  // Закрываем наше кастомное окно
+  closeNexusCustomPrompt();
+  
+  // Мгновенно симулируем клик по твоему родному скрытому загрузчику файлов с компьютера
+  var fileInputPC = document.getElementById('file_' + idIdx); // Исправлено под твою оригинальную разметку file_01
+  if (fileInputPC) {
+    fileInputPC.click(); 
+  }
+}
+
+// ====================================================================
+// ДЕЙСТВИЕ 2: Менеджер вставил URL-адрес и нажал "ПОДТВЕРДИТЬ" (или Enter)
+// ====================================================================
+function processNexusCustomPromptResult(event) {
+  // ПРИНУДИТЕЛЬНЫЙ БЛОКИРОВЩИК: запрещаем форме перехватывать клик
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
+  const modalContainer = document.getElementById('nexusPromptModal');
+  let input = document.getElementById('nexusPromptInputField');
+  
+  if (!input && modalContainer) {
+    input = modalContainer.querySelector('input[type="text"]');
+  }
+  
+  // ВАЖНО: Проверяем слот ДО закрытия окна, пока он не стерся!
+  if (!input || currentActivePhotoSlot === null) {
+    closeNexusCustomPrompt();
+    return;
+  }
+  
+  var urlChoice = input.value.trim();
+  if (urlChoice === "") {
+    closeNexusCustomPrompt();
+    return;
+  }
+  
+  // Вычисляем номер слота (01, 02 и т.д.)
+  var slotNum = currentActivePhotoSlot < 10 ? '0' + currentActivePhotoSlot : currentActivePhotoSlot.toString();
+  
+  // Ищем скрытое поле по name внутри формы
+  const formElement = document.getElementById('hudAddForm');
+  var hiddenInput = formElement ? formElement.elements['img_' + slotNum] : null;
+  var btn = document.getElementById('btn_' + slotNum);
+  
+  if (urlChoice.toLowerCase().startsWith("http")) {
+    if (hiddenInput && btn) {
+      hiddenInput.value = urlChoice; // Интегрируем интернет-ссылку в скрытый инпут для базы
+      
+      // НАМЕРТВО ФИКСИРУЕМ ВИЗУАЛЬНЫЙ СТАТУС НА ЭКРАНЕ
+      btn.textContent = "ССЫЛКА ✓"; 
+      btn.style.borderColor = "#00ff66";
+      btn.style.color = "#00ff66";
+      
+      // Включаем крестик удаления фото для этого слота
+      const cell = btn.parentElement;
+      if (cell) {
+        const xBtn = cell.querySelector('.nexus-delete-x');
+        if (xBtn) xBtn.style.display = "block"; 
+      }
+      
+      if (typeof runHudCascade === 'function') {
+        runHudCascade(["ИНТЕРНЕТ-МЕДИА ИНТЕГРИРОВАНА В СЛОТ " + slotNum], "#00ff66");
+      }
+    }
+  } else {
+    alert("Критическая ошибка: Введен неверный формат. Ссылка должна начинаться с http:// или https://");
+  }
+
+  // ТЕПЕРЬ ЗАКРЫВАЕМ ОКНО В САМОМ КОНЦЕ, когда данные уже успешно сохранены!
+  closeNexusCustomPrompt(); 
+}
+
+// ====================================================================
+// ФУНКЦИЯ ОЧИСТКИ СЛОТА МЕДИА-МАТРИЦЫ ПО НАЖАТИЮ НА КРЕСТИК
+// ====================================================================
+function clearMediaSlot(slotNum) {
+  var imgId = 'img_' + slotNum;
+  var btnId = 'btn_' + slotNum;
+  
+  var hiddenInput = document.getElementById(imgId);
+  var btn = document.getElementById(btnId);
+  var cell = btn ? btn.parentElement : null;
+  var xBtn = cell ? cell.querySelector('.nexus-delete-x') : null;
+  
+  if (hiddenInput) hiddenInput.value = ""; 
+  if (btn) {
+    btn.textContent = "ВЫБРАТЬ ФАЙЛ";
+    btn.style.borderColor = "#1cfdff";
+    btn.style.color = "#1cfdff";
+  }
+  if (xBtn) xBtn.style.display = "none";
+  
+  var fileInput = document.getElementById('file_' + slotNum);
+  if (fileInput) fileInput.value = "";
+}
+</script>
+</body>
+</html>

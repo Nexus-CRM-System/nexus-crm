@@ -1,0 +1,35 @@
+<style>
+  /* ЛОКАЛЬНЫЕ СТИЛИ ВЫЕЗЖАЮЩЕГО ПОДВАЛА NEXUS */
+  .nexus-bottom-status-bar {
+    height: 0px; /* Изначально полностью скрыт под экраном */
+    background: #020a0f;
+    border-top: 0 solid var(--nexus-neon-dim);
+    width: 100vw;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: all 0.3s ease; /* Анимация выезда */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #888;
+  }
+  
+  /* Класс открытия */
+  .nexus-bottom-status-bar.open {
+    height: 38px; /* Чуть приподняли для коммерческой солидности */
+    border-top: 1px solid var(--nexus-neon-dim);
+  }
+</style>
+
+<!-- ГОРИЗОНТАЛЬНЫЙ ПОДВАЛ (ВЫЕЗЖАЕТ СНИЗУ) -->
+<div class="nexus-bottom-status-bar" id="nexusGlobalBottomBar">
+  <div style="display: flex; gap: 20px;">
+    <div>БАЗА ДАННЫХ: <span style="color: var(--nexus-neon);" id="statTotalItems">0</span> ПОЗИЦИЙ</div>
+    <div>В НАЛИЧИИ: <span style="color: #ffaa00;" id="statInStock">0</span> ТОВ.</div>
+  </div>
+  <div style="letter-spacing: 1px; font-size: 11px;">ПРОТОКОЛ ОБМЕНА: <span style="color: #2ECC71;">СТАБИЛЕН ●</span></div>
+</div>

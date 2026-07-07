@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- Подключаем единую дизайн-систему NEXUS -->
+  <?!= include('StyleConstants'); ?>
+  
+  <style>
+    /* Локальный фикс для боковой рамки терминала */
+    html, body {
+      border: 2px solid var(--nexus-neon) !important;
+      box-shadow: inset 0 0 15px rgba(28, 253, 255, 0.2), 0 0 20px rgba(28, 253, 255, 0.15) !important;
+    }
+
+    /* Специфичные стили для Очереди Продаж */
+    .nexus-sales-queue-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: #020c12;
+      border: 1px dashed rgba(28, 253, 255, 0.2);
+      padding: 8px;
+      border-radius: 4px;
+      min-height: 40px;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+
+    .nexus-queue-tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(28, 253, 255, 0.1);
+      border: 1px solid var(--nexus-neon-dim);
+      color: #fff;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 2px;
+      gap: 6px;
+      box-shadow: 0 0 5px rgba(28, 253, 255, 0.1);
+    }
+
+    .nexus-queue-tag span {
+      color: var(--nexus-neon);
+    }
+
+    .nexus-tag-close {
+      color: #ff3333;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .nexus-tag-close:hover {
+      color: #ff6666;
+      transform: scale(1.2);
+      text-shadow: 0 0 5px #ff3333;
+    }
+
+
+  </style>
+</head>
+<body>
+<div class="nexus-sidebar-container">
+  
+  <!-- ПОСТОЯННАЯ ШАПКА -->
+  <div class="sidebar-header">
+    <div class="sidebar-title">Панель Управления</div>
+  </div>
+  
+  <!-- ПОСТОЯННЫЙ ИНДИКАТОР ВКЛАДКИ -->
+  <div class="current-tab-indicator" id="hudActiveModuleTag">КАТАЛОГ</div>
+  
+
+  <!-- ЗОНА СКРОЛЛА С КНОПКАМИ КАТАЛОГА -->
+  <div class="scrollable-content-zone">
+    <div class="context-block" id="moduleContentCatalog">
+
+
+
+      <div class="context-title-sub">Поиск по каталогу</div>
+      <div class="search-input-wrapper">
+        <input type="text" id="hudSearch" placeholder="Введите запрос..." onkeydown="checkEnterKey(event)">
+        <button class="nexus-clear-btn" onclick="resetSearch()">&times;</button>
+      </div>
+      <button type="button" class="hud-btn" style="margin-top: 6px; margin-bottom: 8px;" onclick="runSearch()">Выполнить Поиск</button>
+      
+      <div class="section-divider"></div>
+      
+      <div class="context-title-sub">Поиск аналогов</div>
+      <div class="search-input-wrapper">
+        <input type="text" id="nexusAnalogInput" placeholder="Введите ID товара..." oninput="cyberInt(this)" onkeydown="checkAnalogEnterKey(event)" autocomplete="off">
+        <button class="nexus-clear-btn" onclick="clearAnalogSelectionFilter()">&times;</button>
+      </div>
+      <button type="button" class="hud-btn" style="margin-top: 6px; margin-bottom: 8px;" onclick="runAnalogSelection()">Подобрать аналоги</button>
+      
+      <div class="section-divider"></div>
+      
+      <div class="context-title-sub">Карточка товара</div>
+      <div class="search-input-wrapper">
+        <input type="text" id="hudCardIdInput" placeholder="Введите ID..." onkeydown="checkCardEnterKey(event)">
+        <button class="nexus-clear-btn" onclick="resetCardIdInput()">&times;</button>
+      </div>
+      <button type="button" id="act_view" class="hud-btn" style="margin-top: 6px; margin-bottom: 8px;" onclick="openCombinedCardById()">Открыть карточку</button>
+      
+      <div class="section-divider"></div>
+      
+      <div class="context-title-sub">Управление каталогом</div>
+      <button type="button" id="act_lib" class="hud-btn" style="margin-bottom: 8px;" onclick="triggerRubricatorModal()">Рубрикатор каталога</button>
+      
+      <div class="section-divider"></div>
+      
+      <div class="context-title-sub">Общие операции</div>
+      <button type="button" class="hud-btn" style="margin-bottom: 6px;" onclick="triggerAddFormModal()">Добавить товар / услугу</button>
+      <button type="button" id="btnExcelImport" class="hud-btn" style="margin-bottom: 6px;" onclick="triggerExcelImportModal()">Импорт из Excel</button>
+      <button type="button" id="btnExcelExport" class="hud-btn" style="margin-bottom: 8px;" onclick="executeCatalogExport()">Экспорт в Excel</button>
+      
+      <div class="section-divider"></div>
+
+      <!-- СИСТЕМНЫЙ БЛОК: ОЧЕРЕДЬ ПРОДАЖ (НАКОПИТЕЛЬ ПОЗИЦИЙ) -->
+      <div class="context-title-sub">Накопитель продажи</div>
+      <div class="search-input-wrapper">
+        <input type="text" id="hudSalesQueueInput" placeholder="ID или Штрихкод..." onkeydown="checkQueueEnterKey(event)">
+        <button class="nexus-clear-btn" style="right: 32px !important;" onclick="clearQueueInput()">&times;</button>
+        <button type="button" class="nexus-clear-btn" style="right: 12px !important; color: var(--nexus-neon);" onclick="addFromQueueInput()">+</button>
+      </div>
+ 
+      <div class="nexus-sales-queue-box" id="nexusSalesQueueContainer">
+        <!-- Сюда JS будет рендерить теги добавленных товаров -->
+      </div>
+ 
+      <button type="button" id="btnOpenSalesModal" class="hud-btn" style="margin-bottom: 8px;" onclick="triggerSalesWizardModal()" disabled>Оформить продажу</button>
+
+      <div class="section-divider"></div>
+    </div> <!-- Конец блока moduleContentCatalog -->
+
+  </div> <!-- Конец зоны скролла -->
+
+  <!-- ПОСТОЯННЫЙ ПОДВАЛ ДЛЯ ОШИБОК И ЛОГОВ -->
+  <div class="sidebar-status-footer">
+    <div id="hudSidebarConsole" class="nexus-logger-alert" style="text-align: center; transition: opacity 0.3s; opacity: 0;"></div>
+  </div>
+
+</div> <!-- Конец главного контейнера -->
+
+<script>
+
+// ====================================================================
+// Глобальный массив для хранения накопленных ID позиций
+// ====================================================================
+let ascending = true;
+let salesQueueItems = [];
+
+// ====================================================================
+// Сброс полей при загрузке страницы
+// ====================================================================
+window.onload = function() {
+  const searchInput = document.getElementById('hudSearch');
+  const cardIdInput = document.getElementById('hudCardIdInput');
+  const queueInput = document.getElementById('hudSalesQueueInput');
+
+  if (searchInput) searchInput.value = "";
+  if (cardIdInput) cardIdInput.value = "";
+  if (queueInput) queueInput.value = "";
+ 
+  // Инициализируем пустой интерфейс накопителя продаж
+  updateQueueUI();
+ 
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.clearAnalogsFilter();
+  }
+};
+
+// ====================================================================
+// НАСТРОЙКА ENTER: Поиск по каталогу
+// ====================================================================
+function checkEnterKey(event) {
+  if (event.key === "Enter" || event.keyCode === 13) {
+    event.preventDefault();
+    runSearch();
+  }
+}
+
+// ====================================================================
+// НАСТРОЙКА ENTER: Поиск аналогов
+// ====================================================================
+function checkAnalogEnterKey(event) {
+  if (event.key === "Enter" || event.keyCode === 13) {
+    event.preventDefault();
+    runAnalogSelection();
+  }
+}
+
+// ====================================================================
+// НАСТРОЙКА ENTER: Карточка товара
+// ====================================================================
+function checkCardEnterKey(event) {
+  if (event.key === "Enter" || event.keyCode === 13) {
+    event.preventDefault();
+    openCombinedCardById();
+  }
+}
+
+// ====================================================================
+// Функция выполнения поиска по каталогу с валидацией пустого поля
+// ====================================================================
+function runSearch() {
+  const query = document.getElementById('hudSearch').value.trim();
+  const sideConsole = document.getElementById('hudSidebarConsole');
+  
+  if (!sideConsole) return;
+
+  // Жесткий блок: защита от пустого ввода
+  if (query === "") {
+    sideConsole.style.opacity = "1";
+    sideConsole.style.color = "#ff3333"; // Красный цвет
+    sideConsole.style.textShadow = "0 0 8px rgba(255, 51, 51, 0.6)";
+    sideConsole.innerText = "ВВЕДИТЕ ПОИСКОВЫЙ ЗАПРОС";
+    setTimeout(() => { sideConsole.style.opacity = "0"; }, 3000);
+    return; // Останавливаем выполнение скрипта
+  }
+  
+  // Если текст есть — включаем стандартный протокол шлюза
+  sideConsole.style.opacity = "1";
+  sideConsole.style.color = "#ffaa00";
+  sideConsole.style.textShadow = "0 0 5px rgba(255, 170, 0, 0.4)";
+  sideConsole.innerText = "ФИЛЬТРАЦИЯ КАТАЛОГА...";
+  
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success) {
+          if (response.count === 0) {
+            sideConsole.style.color = "#ff3333";
+            sideConsole.style.textShadow = "0 0 8px rgba(255, 51, 51, 0.6)";
+            sideConsole.innerText = "Совпадений не найдено";
+          } else {
+            sideConsole.style.color = "#00ff66";
+            sideConsole.style.textShadow = "0 0 8px rgba(0, 255, 102, 0.6)";
+            sideConsole.innerText = `Найдено совпадений: ${response.count} `;
+          }
+        } else {
+          sideConsole.style.color = "#ff3333";
+          sideConsole.innerText = "ОШИБКА ШЛЮЗА ПОИСКА";
+        }
+        setTimeout(() => { sideConsole.style.opacity = "0"; }, 3000);
+      })
+      .withFailureHandler(function() {
+        showConsoleMessage("КРИТИЧЕСКИЙ СБОЙ СЕТИ", true);
+      })
+      .runServerSearch(query);
+  }
+}
+
+// ====================================================================
+// Защита ввода: только цифры для ID товара
+// ====================================================================
+function cyberInt(input) {
+  if (!input) return;
+  input.value = input.value.replace(/[^0-9]/g, '');
+}
+
+// ====================================================================
+// Сброс поля ID карточки
+// ====================================================================
+function resetCardIdInput() {
+  const idInput = document.getElementById('hudCardIdInput');
+  if (idInput) idInput.value = "";
+  showConsoleMessage("ПОЛЕ ID ОЧИЩЕНО", false);
+}
+
+// ====================================================================
+// Полный сброс фильтра поиска
+// ====================================================================
+function resetSearch() { 
+  const input = document.getElementById('hudSearch');
+  if (input) input.value = ""; 
+  showConsoleMessage("СБРОС ФИЛЬТРА...", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.clearAnalogsFilter();
+  }
+}
+
+// ====================================================================
+// Активация протокола добавления рубрик
+// ====================================================================
+function triggerRubricatorModal() {
+  showConsoleMessage("Активирован протокол добавления рубрик", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.openModalRubricatorDialog();
+  }
+}
+
+// ====================================================================
+// Активация протокола добавления товара
+// ====================================================================
+function triggerAddFormModal() {
+  showConsoleMessage("Активирован протокол добавления товара", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.openModalAddForm();
+  }
+}
+
+// ====================================================================
+// Активация протокола выгрузки из Excel
+// ====================================================================
+function triggerExcelImportModal() {
+  showConsoleMessage("Активирован протокол выгрузки из Excel", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.openExcelImportDialog();
+  }
+}
+
+// ====================================================================
+// Активация протокола экспорта в Excel
+// ====================================================================
+function executeCatalogExport() {
+  showConsoleMessage("Активирован протокол экспорта в Excel", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.openExcelExportDialog();
+  }
+}
+
+// ====================================================================
+// Протокол подбора аналогов по ID
+// ====================================================================
+function runAnalogSelection() {
+  const inputEl = document.getElementById('nexusAnalogInput');
+  const sidebarLoader = document.getElementById('hudSidebarConsole');
+  if (!inputEl) return;
+  const targetId = inputEl.value.toString().trim();
+  
+  if (!targetId) {
+    if (sidebarLoader) {
+      sidebarLoader.style.color = "#ff3333";
+      sidebarLoader.innerText = "ВВЕДИТЕ ID ТОВАРА";
+      sidebarLoader.style.opacity = "1";
+      setTimeout(function() { sidebarLoader.style.opacity = "0"; }, 3000);
+    }
+    return;
+  }
+  
+  if (sidebarLoader) {
+    sidebarLoader.style.color = "#ffaa00";
+    sidebarLoader.innerText = "ИДЕТ АНАЛИЗ КАТАЛОГА...";
+    sidebarLoader.style.opacity = "1";
+  }
+  
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success) {
+          if (sidebarLoader) {
+            sidebarLoader.style.color = "#00ff66";
+            sidebarLoader.innerText = response.count === 0 ? "СОВПАДЕНИЙ НЕ НАЙДЕНО" : `НАЙДЕНО СОВПАДЕНИЙ: ${response.count} `;
+          }
+          setTimeout(function() { if (sidebarLoader) sidebarLoader.style.opacity = "0"; }, 3000);
+        } else {
+          if (sidebarLoader) { 
+            sidebarLoader.style.color = "#ff3333"; 
+            sidebarLoader.innerText = "СБОЙ СЕРВЕРА АНАЛОГОВ"; 
+          }
+          alert("Ошибка ИИ-фильтра: " + response.msg);
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (sidebarLoader) { 
+          sidebarLoader.style.color = "#ff3333"; 
+          sidebarLoader.innerText = "КРИТИЧЕСКИЙ СБОЙ СЕТИ"; 
+        }
+        alert("Критический сбой: " + err.message);
+      })
+      .findAndFilterAnalogsByItemId(targetId);
+  }
+}
+
+// ====================================================================
+// Сброс фильтра аналогов
+// ====================================================================
+function clearAnalogSelectionFilter() {
+  const inputEl = document.getElementById('nexusAnalogInput');
+  if (inputEl) inputEl.value = "";
+  const sidebarLoader = document.getElementById('hudSidebarConsole');
+  if (sidebarLoader) {
+    sidebarLoader.style.color = "#ffaa00";
+    sidebarLoader.innerText = "СБРОС ФИЛЬТРА...";
+    sidebarLoader.style.opacity = "1";
+    setTimeout(function() { sidebarLoader.style.opacity = "0"; }, 2000);
+  }
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.clearAnalogsFilter();
+  }
+}
+
+// ====================================================================
+// Открытие комбинированной карточки товара по ID
+// ====================================================================
+function openCombinedCardById() {
+  const idInput = document.getElementById('hudCardIdInput');
+  const targetId = idInput ? idInput.value.trim() : "";
+  if (!targetId) {
+    showConsoleMessage("ВВЕДИТЕ ID ТОВАРА", true);
+    return;
+  }
+  showConsoleMessage("Идет поиск карточки...", false);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.success === false) {
+          showConsoleMessage(`ID ${targetId.toUpperCase()} НЕ СУЩЕСТВУЕТ`, true);
+        }
+      })
+      .openModalCardViewByItemId(targetId);
+  }
+}
+
+// ====================================================================
+// Универсальная функция вывода сообщений в системный подвал
+// ====================================================================
+function showConsoleMessage(text, isError) {
+  const sideConsole = document.getElementById('hudSidebarConsole');
+  if (!sideConsole) return;
+  sideConsole.style.opacity = "1";
+  sideConsole.style.color = isError ? "#ff3333" : "#ffaa00";
+  sideConsole.style.textShadow = isError ? "0 0 8px rgba(255, 51, 51, 0.5)" : "0 0 5px rgba(255, 170, 0, 0.4)";
+  sideConsole.textContent = text;
+  setTimeout(() => { sideConsole.style.opacity = "0"; }, 3000);
+}
+
+// ====================================================================
+// Перехват Enter для очереди продаж (идеально для сканера штрихкодов)
+// ====================================================================
+function checkQueueEnterKey(event) {
+  if (event.key === "Enter" || event.keyCode === 13) {
+    event.preventDefault();
+    addFromQueueInput();
+  }
+}
+
+// ====================================================================
+// ОЧЕРЕДЬ ПРОДАЖ: Очистка инпута
+// ====================================================================
+function clearQueueInput() {
+  const input = document.getElementById('hudSalesQueueInput');
+  if (input) input.value = "";
+}
+
+// ====================================================================
+// ОЧЕРЕДЬ ПРОДАЖ: Добавление из инпута (Сканер или Ручной ввод)
+// ====================================================================
+function addFromQueueInput() {
+  const inputEl = document.getElementById('hudSalesQueueInput');
+  if (!inputEl) return;
+  const rawValue = inputEl.value.trim();
+ 
+  if (!rawValue) {
+    showConsoleMessage("ВВЕДИТЕ ID ИЛИ ШТРИХКОД", true);
+    return;
+  }
+ 
+  showConsoleMessage("ПРОВЕРКА ПОЗИЦИИ...", false);
+ 
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.success) {
+          const confirmedId = response.productId.toString();
+ 
+          if (salesQueueItems.includes(confirmedId)) {
+            showConsoleMessage("ТОВАР УЖЕ В ОЧЕРЕДИ", true);
+            inputEl.value = "";
+            return;
+          }
+ 
+          salesQueueItems.push(confirmedId);
+          updateQueueUI();
+          inputEl.value = "";
+          
+          // Железные 3000 мс для отображения успеха
+          showConsoleMessage(`ДОБАВЛЕН ID: ${confirmedId}`, false);
+          
+          // ЭРГОНОМИКА: Если это первая позиция, плавно доскролливаем панель до кнопки оформления
+          if (salesQueueItems.length === 1) {
+            const btnOpen = document.getElementById('btnOpenSalesModal');
+            if (btnOpen) {
+              btnOpen.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        } else {
+          // Железные 3000 мс для отображения ошибки поиска
+          showConsoleMessage("ПОЗИЦИЯ НЕ НАЙДЕНА", true);
+        }
+      })
+      .withFailureHandler(function() {
+        showConsoleMessage("СБОЙ СЕРВЕРА ОЧЕРЕДИ", true);
+      })
+      .verifyAndGetIdByCode(rawValue);
+  }
+}
+
+// ====================================================================
+// ВНЕШНИЙ ИНТЕРФЕЙС ДЛЯ КАРТОЧКИ ТОВАРА
+// ====================================================================
+function pushIdToSalesQueueExternal(targetId) {
+  if (!targetId) return;
+  const idStr = targetId.toString().trim();
+ 
+  if (salesQueueItems.includes(idStr)) {
+    showConsoleMessage("ТОВАР УЖЕ В ОЧЕРЕДИ", true);
+    return;
+  }
+ 
+  salesQueueItems.push(idStr);
+  updateQueueUI();
+  showConsoleMessage(`ДОБАВЛЕН ID: ${idStr}`, false);
+}
+
+// ====================================================================
+// ОЧЕРЕДЬ ПРОДАЖ: Удаление тега по клику на крестик
+// ====================================================================
+function removeIdFromQueue(idToRemove) {
+  salesQueueItems = salesQueueItems.filter(item => item !== idToRemove.toString());
+  updateQueueUI();
+  showConsoleMessage("ПОЗИЦИЯ УДАЛЕНА", false);
+}
+
+// ====================================================================
+// ОЧЕРЕДЬ ПРОДАЖ: Обновление интерфейса накопителя
+// ====================================================================
+function updateQueueUI() {
+  const container = document.getElementById('nexusSalesQueueContainer');
+  const btnOpen = document.getElementById('btnOpenSalesModal');
+  if (!container || !btnOpen) return;
+ 
+  container.innerHTML = "";
+ 
+  if (salesQueueItems.length === 0) {
+    container.innerHTML = '<div style="color: var(--nexus-text-sub); font-size: 10px; width:100%; text-align:center; line-height:24px;">НАКОПИТЕЛЬ ПУСТ</div>';
+    btnOpen.disabled = true;
+    return;
+  }
+ 
+  salesQueueItems.forEach(id => {
+    const tag = document.createElement('div');
+    tag.className = 'nexus-queue-tag';
+    tag.innerHTML = `ID: <span>${id}</span><div class="nexus-tag-close" onclick="removeIdFromQueue('${id}')">&times;</div>`;
+    container.appendChild(tag);
+  });
+ 
+  btnOpen.disabled = false;
+}
+
+// ====================================================================
+// ОЧЕРЕДЬ ПРОДАЖ: Активация мастера оформления сделки
+// ====================================================================
+function triggerSalesWizardModal() {
+  if (salesQueueItems.length === 0) return;
+  showConsoleMessage("АКТИВИРОВАН ПРОТОКОЛ ПРОДАЖИ...", false);
+ 
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.openModalSalesWizard(salesQueueItems);
+  }
+}
+
+// ====================================================================
+// NEXUS CORE: Модальный шлюз открытия формы создания/карточки КЛИЕНТА
+// ====================================================================
+function openModalClientForm() {
+  try {
+    // Готовим шаблон будущей формы (создадим этот файл следующим шагом)
+    var template = HtmlService.createTemplateFromFile("Clients_AddForm");
+    
+    // Передаем в форму нашу ДНК-карту столбцов, которую мы написали вчера
+    template.clients_map = getNexusClientsMap();
+    
+    var htmlOutput = template.evaluate()
+      .setWidth(1050) // Делаем просторную коммерческую ширину под реквизиты юрлиц
+      .setHeight(750) // Комфортная высота для экранов ноутбуков
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    
+    SpreadsheetApp.getUi().showModalDialog(htmlOutput, " "); 
+  } catch (err) {
+    SpreadsheetApp.getUi().alert("Критический сбой запуска модуля Клиенты: " + err.message);
+  }
+}
+
+// ====================================================================
+// НАВИГАЦИОННЫЙ РАДАР NEXUS: Авто-переключение блоков при смене вкладок
+// ====================================================================
+function startNavigationRadar() {
+  setInterval(function() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(activeSheetName) {
+          const cleanName = activeSheetName.trim().toUpperCase();
+          
+          // Элементы управления на твоем сайдбаре
+          const catalogBlock = document.getElementById('moduleContentCatalog');
+          const clientsBlock = document.getElementById('moduleContentClients');
+          const tag = document.getElementById('hudActiveModuleTag');
+          
+          if (tag) tag.textContent = cleanName;
+          
+          // Если менеджер сам перешел на лист КЛИЕНТЫ внизу экрана:
+          if (cleanName === "КЛИЕНТЫ") {
+            if (catalogBlock) catalogBlock.style.display = 'none';
+            if (clientsBlock) clientsBlock.style.display = 'flex';
+          } 
+          // Если менеджер вернулся на лист КАТАЛОГ внизу экрана:
+          else if (cleanName === "КАТАЛОГ") {
+            if (catalogBlock) catalogBlock.style.display = 'flex';
+            if (clientsBlock) clientsBlock.style.display = 'none';
+          }
+        })
+        .nexusGetActiveSheetName(); // Бесшумный вызов сервера
+    }
+  }, 1000); // Проверка каждую 1 секунду
+}
+
+// Запускаем радар автоматически при старте боковой панели
+window.addEventListener('load', startNavigationRadar);
+
+</script>
+</body>
+</html>

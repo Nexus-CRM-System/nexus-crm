@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+  
+  <style>
+    /* Отключение системных стрелочек вверх/вниз в числовых полях ввода */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Адаптивная зона таблиц сделки */
+    .sales-tables-container {
+      flex: 1;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      margin-bottom: 85px; 
+      padding-right: 5px;
+    }
+
+    .full-screen-wrapper select option {
+      background-color: #041620 !important;
+      color: #fff !important;
+    }
+
+    /* ДЕКОРАТИВНЫЙ ЗАМОРОЖЕННЫЙ ТЕКСТ (ЦЕНЫ, ОСТАТКИ, НДС) */
+    .sales-text-frozen {
+      color: #fff !important;
+      font-family: monospace, sans-serif !important;
+      font-size: 12px !important;
+      font-weight: bold !important;
+      text-align: right;
+      width: 100%;
+      user-select: none;
+    }
+
+    /* Оформление табличной сетки терминала продаж NEXUS */
+    .nexus-sales-table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin-top: 6px !important;
+      margin-bottom: 20px !important;
+      box-sizing: border-box !important;
+      table-layout: fixed !important; /* Жестко фиксируем сетку для идеальной параллельности */
+    }
+    .nexus-sales-table th {
+      background: #04141d !important;
+      color: var(--nexus-neon) !important;
+      font-size: 11px !important;
+      text-transform: uppercase !important;
+      padding: 8px !important;
+      border: 1px solid rgba(28, 253, 255, 0.15) !important;
+      text-align: left !important;
+      letter-spacing: 0.5px !important;
+    }
+    .nexus-sales-table td {
+      padding: 5px 6px !important;
+      border: 1px solid rgba(28, 253, 255, 0.1) !important;
+      font-size: 12px !important;
+      color: #fff !important;
+      vertical-align: middle !important;
+    }
+    .nexus-sales-table input[type="number"] {
+      width: 100% !important; /* Растягиваем инпут на всю выделенную ширину колонки colgroup */
+      text-align: center !important;
+      padding: 4px 4px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Настройка эталонного интерактивного крестика NEXUS */
+    .nexus-row-delete-x {
+      color: rgba(28, 253, 255, 0.4) !important; 
+      font-size: 20px !important; 
+      transition: all 0.15s ease-in-out !important;
+      cursor: pointer !important;
+      user-select: none;
+      display: block;
+      text-align: center;
+    }
+    .nexus-row-delete-x:hover {
+      color: var(--nexus-neon) !important; 
+      transform: scale(1.25);
+      text-shadow: 0 0 10px var(--nexus-neon);
+    }
+
+    .sales-param-label {
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      margin-bottom: 4px !important;
+      color: #00f3ff !important;
+      text-shadow: 0 0 5px rgba(0, 243, 255, 0.4) !important;
+      letter-spacing: 0.5px !important;
+      display: block !important;
+    }
+
+    /* Инверсия цвета кнопок подвала при наведении по ГОСТу NEXUS */
+    .submit-panel .hud-btn {
+      transition: all 0.15s ease-in-out !important;
+    }
+    .submit-panel .hud-btn:hover {
+      background-color: var(--nexus-neon) !important;
+      color: #061e2a !important; 
+      box-shadow: 0 0 15px var(--nexus-neon) !important;
+    }
+
+    /* Фиксированная эталонная submit-панель NEXUS */
+    .submit-panel {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 70px !important;
+      padding: 0 25px !important;
+      box-sizing: border-box !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-top: 1px solid var(--nexus-neon) !important;
+      background-color: var(--nexus-bg-main) !important;
+      z-index: 9999 !important;
+    }
+
+  </style>
+</head>
+<body>
+<div class="full-screen-wrapper">
+
+  <!-- ЦЕНТРИРОВАННЫЙ ЗАГОЛОВОК ОКНА -->
+  <div style="text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--nexus-neon-dim); flex-shrink: 0;">
+    <div style="font-size: 15px; font-weight: bold; color: var(--nexus-neon); letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 8px rgba(28, 253, 255, 0.4);">
+      Терминал продажи
+    </div>
+  </div>
+
+
+    <div class="sales-tables-container">
+      <!-- РАЗДЕЛ: ТОВАРЫ -->
+      <div class="hud-section-title">Раздел: Товары</div>
+      <table class="nexus-sales-table" id="goodsTable">
+      <colgroup>
+        <col class="nexus-col-id">
+        <col class="nexus-col-art">
+        <col class="nexus-col-name">
+        <col class="nexus-col-metric">
+        <col class="nexus-col-type">
+        <col class="nexus-col-price">
+        <col class="nexus-col-qty">
+        <col class="nexus-col-unit">
+        <col class="nexus-col-disc1">
+        <col class="nexus-col-disc2">
+        <col class="nexus-col-vat">
+        <col class="nexus-col-total">
+        <col class="nexus-col-del">
+      </colgroup>
+      <thead>
+        <tr>
+          <th id="th_id">ID</th>
+          <th id="th_sku">АРТИКУЛ</th>
+          <th id="th_name">НАИМЕНОВАНИЕ</th>
+          <th id="th_stock_qty">ОСТАТОК</th>
+          <th id="th_price_type">ТИП ЦЕНЫ</th>
+          <th id="th_price_retail">ЦЕНА, ₽</th>
+          <th id="th_qty">КОЛ-ВО</th>
+          <th id="th_stock_unit">ЕД.ИЗМ</th>
+          <th id="th_discount_1">СКИДКА %</th>
+          <th id="th_discount_2">СКИДКА ₽</th>
+          <th id="th_vat_rate">НДС %</th>
+          <th id="th_total_row">ИТОГО</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbodySalesProducts"></tbody>
+      </table>
+
+      <!-- РАЗДЕЛ: УСЛУГИ -->
+      <div class="hud-section-title" style="margin-top: 20px;">Раздел: Услуги</div>
+      <table class="nexus-sales-table" id="servicesTable">
+      <colgroup>
+        <col class="nexus-col-id">
+        <col class="nexus-col-art">
+        <col class="nexus-col-name">
+        <col class="nexus-col-metric">
+        <col class="nexus-col-type">
+        <col class="nexus-col-price">
+        <col class="nexus-col-qty">
+        <col class="nexus-col-unit">
+        <col class="nexus-col-disc1">
+        <col class="nexus-col-disc2">
+        <col class="nexus-col-vat">
+        <col class="nexus-col-total">
+        <col class="nexus-col-del">
+      </colgroup>
+      <thead>
+        <tr>
+          <th id="th_srv_id">ID</th>
+          <th id="th_srv_sku">АРТИКУЛ</th>
+          <th id="th_srv_name">НАИМЕНОВАНИЕ</th>
+          <th id="th_time_norm_val">НОРМА ВРЕМЕНИ</th>
+          <th id="th_srv_price_type">ТИП ЦЕНЫ</th>
+          <th id="th_srv_price_retail">ЦЕНА, ₽</th>
+          <th id="th_srv_qty">КОЛ-ВО</th>
+          <th id="th_duration_val">ДЛИТ. УСЛУГИ</th>
+          <th id="th_srv_discount_1">СКИДКА %</th>
+          <th id="th_srv_discount_2">СКИДКА ₽</th>
+          <th id="th_srv_vat_rate">НДС %</th>
+          <th id="th_srv_total_row">ИТОГО</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbodySalesServices"></tbody>
+      </table>
+
+
+
+
+
+    <!-- РАЗДЕЛ 3: КОНТРАГЕНТ (НА ФИРМЕННЫХ РАЗДЕЛИТЕЛЯХ NEXUS) -->
+    <div class="section-divider" style="margin-top: 20px; margin-bottom: 15px;"></div>
+    
+    <div style="padding: 0 5px; margin-bottom: 15px; box-sizing: border-box; width: 100%;">
+      <span class="sales-param-label" style="color: var(--nexus-text-sub) !important; text-shadow: none !important;">Данные клиента</span>
+      <div style="display: flex; gap: 12px; align-items: center; margin-top: 6px;">
+        <input type="text" style="max-width: 350px; background: rgba(4, 22, 32, 0.8) !important;" placeholder="Поиск клиента по базе (Модуль в разработке)..." disabled>
+        <button type="button" class="hud-btn" style="height: 26px !important; line-height: 22px !important; margin: 0 !important; width: auto !important; padding: 0 15px !important;">+ Новый Клиент</button>
+      </div>
+    </div>
+
+    <!-- РАЗДЕЛ 4: ПАРАМЕТРЫ ОПЛАТЫ И ОРГАНАЙЗЕР КОММЕНТАРИЕВ -->
+    <div class="section-divider" style="margin-top: 15px; margin-bottom: 15px;"></div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 5px; box-sizing: border-box; width: 100%;">
+      <div>
+        <label class="sales-param-label">Форма оплаты</label>
+        <select id="salesPaymentType">
+          <option value="Наличными">Наличными</option>
+          <option value="На карту">На карту</option>
+          <option value="Счет">Безналичный (Счет)</option>
+        </select>
+      </div>
+      <div>
+        <label class="sales-param-label">Ответственный менеджер</label>
+        <select id="salesManagerSelect">
+          <option value="Текущий пользователь">Текущий пользователь</option>
+        </select>
+      </div>
+      
+      <div style="grid-column: span 2 !important; margin-top: 5px;">
+        <label class="sales-param-label">Комментарий к сделке</label>
+        <textarea id="salesGlobalComment" rows="4" style="width: 100%; height: 90px !important; background: #041620 !important; border: 1px solid var(--nexus-neon-dim) !important; color: #fff !important; padding: 6px !important; font-family: inherit; font-size: 12px; box-sizing: border-box; border-radius: 2px; resize: none; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--nexus-neon)'" onblur="this.style.borderColor='var(--nexus-neon-dim)'" placeholder="Внутренние заметки по обязательствам, доставке или договоренностям..."></textarea>
+      </div>
+    </div>
+
+    <div class="section-divider" style="margin-top: 20px; margin-bottom: 80px;"></div>
+
+  </div> <!-- Конец зоны скролла sales-tables-container -->
+
+  <!-- ИСПРАВЛЕННЫЙ ПОДВАЛ: СЕТКА И ВЫСОТА ВЫРАВНЕНЫ -->
+  <div class="submit-panel" style="position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 100px !important; padding: 10px 25px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; justify-content: center !important; gap: 8px !important; border-top: 1px solid var(--nexus-neon) !important; background-color: var(--nexus-bg-main) !important; z-index: 9999 !important;">
+      
+    <!-- Верхний этаж подвала: Сумма сделки строго над кнопками -->
+    <div style="display: flex; justify-content: flex-start; width: 100%; box-sizing: border-box;">
+      <div class="total-sum-display" style="margin: 0; padding: 0; font-size: 15px; letter-spacing: 1px;">
+        ИТОГО К ОПЛАТЕ: <span id="nexusSalesTotalSum" style="color: var(--nexus-neon); font-weight: bold;">0.00</span> ₽
+      </div>
+    </div>
+
+    <!-- Нижний этаж подвала: Кнопки слева, фирменный логгер подсказок справа -->
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; margin-top: 5px;">
+    <div style="display: flex; gap: 10px;">
+      <!-- ПРИСВОИЛИ КРИТИЧЕСКИЕ ID ДЛЯ УПРАВЛЕНИЯ БЛОКИРОВКАМИ -->
+      <button type="button" id="btnExecuteSale" class="hud-btn" onclick="executeSalesTransaction('Продано')">Продажа</button>
+      <button type="button" id="btnExecuteReserve" class="hud-btn" onclick="executeSalesTransaction('В резерве')">В резерв</button>
+      <button type="button" class="hud-btn" onclick="generateSalesDocuments()">Документы</button>
+      <button type="button" class="hud-btn" onclick="closeSalesWizardModal()">Выйти</button>
+    </div>
+    
+    <!-- Назначили ID для вывода системной ошибки блокировки остатков -->
+    <div id="salesStockAlertHint" class="nexus-logger-alert" style="text-align: right; font-size: 11px; font-weight: bold; font-family: sans-serif; letter-spacing: 0.5px; color: #ff3333; min-width: 300px;"></div>
+
+    </div>
+  </div>
+
+
+</div> <!-- Конец .full-screen-wrapper -->
+
+
+<script>
+
+// ====================================================================
+// NEXUS SALES TERMINAL — КЛИЕНТСКИЙ ДВИЖОК ОЧЕРЕДИ СДЕЛКИ
+// ====================================================================
+var nexusRawItems = JSON.parse('<?!= itemsJson || "[]" ?>');
+var salesActiveItems = [];
+
+// ====================================================================
+// Первичный запуск движка при полной загрузке окна
+// ====================================================================
+window.onload = function() {
+  initSalesWizard();
+};
+
+// ====================================================================
+// Инициализация структуры данных, параметров цен и списка персонала NEXUS
+// ====================================================================
+function initSalesWizard() {
+  // 1. АВТОМАТИЧЕСКОЕ НАПОЛНЕНИЕ ВЫПАДАЮЩЕГО СПИСКА МЕНЕДЖЕРОВ
+  try {
+    var rawManagers = '<?!= managersJson || "[]" ?>';
+    var managers = JSON.parse(rawManagers);
+    var selectElement = document.getElementById("salesManagerSelect");
+    
+    if (selectElement) {
+      selectElement.innerHTML = "";
+      selectElement.style.color = '#fff';
+      
+      if (Array.isArray(managers) && managers.length > 0) {
+        var defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "— ВЫБЕРИТЕ МЕНЕДЖЕРА —";
+        selectElement.appendChild(defaultOpt);
+        
+        managers.forEach(function(name) {
+          var opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          selectElement.appendChild(opt);
+        });
+      } else {
+        var alertOpt = document.createElement("option");
+        alertOpt.value = "";
+        alertOpt.textContent = "СОТРУДНИКИ НЕ ДОБАВЛЕНЫ ⚠";
+        alertOpt.style.color = "#ffaa00";
+        alertOpt.disabled = true;
+        selectElement.appendChild(alertOpt);
+      }
+    }
+  } catch (err) {
+    console.error("Сбой инициализации списка менеджеров NEXUS: " + err.message);
+  }
+
+  // 2. СТАНДАРТНЫЙ ПАКЕТНЫЙ РАСЧЕТ ОЧЕРЕДИ СДЕЛКИ С КОНТРОЛЕМ ОСТАТКОВ
+  if (!nexusRawItems || nexusRawItems.length === 0) return;
+  
+  salesActiveItems = nexusRawItems.map((item, index) => {
+    var currentPrice = parseFloat(item.price_retail) || 0;
+    var maxStock = parseFloat(item.stock_qty) || 0;
+    var isService = (item.record_type === "Услуга");
+    
+    var defaultQty = 0;
+    
+    return {
+      uid: "row-item-" + index,
+      id: item.id,
+      type: item.record_type || "Товар",
+      sku: item.sku || "",
+      name: item.name || "Без названия",
+      unit: item.stock_unit || "шт.",
+      stockQty: maxStock,
+      vatRate: item.vat_rate ? item.vat_rate.toString() : "Без НДС",
+      timeNormVal: item.time_norm_val || "",
+      timeNormUnit: item.time_norm_unit || "",
+      durationVal: item.duration_val || "",
+      durationUnit: item.duration_unit || "",
+      priceSelf: parseFloat(item.production_cost) || 0,
+      priceOpt: parseFloat(item.price_wholesale) || 0,
+      priceRetail: currentPrice,
+      selectedPriceType: "Retail",
+      currentPrice: currentPrice,
+      qty: defaultQty,
+      discountPercent: 0,
+      discountRub: 0,
+      totalRow: currentPrice * defaultQty
+    };
+  });
+  
+  renderSalesTables();
+  
+  // Проверяем кассу при старте окна
+  validateGlobalSalesStatus();
+  
+  // ИСПРАВЛЕНО: Принудительно пропускаем каждую позицию через умный калькулятор обеспечения при старте окна
+  salesActiveItems.forEach((item, idx) => {
+    if (item.type === 'Товар') {
+      // Имитируем ввод текущего количества, чтобы прописать qtyFromStock, qtyToOrder и подсветить строчку
+      updateRowQty(idx, item.qty);
+    }
+  });
+}
+
+// ====================================================================
+// Разрешает любые продажи и убирает блокировки
+// ====================================================================
+function validateGlobalSalesStatus() {
+  var btnSale = document.getElementById("btnExecuteSale");
+  var btnReserve = document.getElementById("btnExecuteReserve");
+  
+  // Кнопки всегда доступны для работы, так как дефицит улетает «Под заказ»
+  if (btnSale) { btnSale.disabled = false; btnSale.style.opacity = "1"; btnSale.style.cursor = "pointer"; }
+  if (btnReserve) { btnReserve.disabled = false; btnReserve.style.opacity = "1"; btnReserve.style.cursor = "pointer"; }
+  
+  const modalConsole = document.getElementById('salesStockAlertHint');
+  if (modalConsole) modalConsole.style.opacity = "0";
+}
+
+
+// ====================================================================
+// Генерация строк на базе классической табличной структуры
+// ====================================================================
+function renderSalesTables() {
+  const tbodyProducts = document.getElementById("tbodySalesProducts");
+  const tbodyServices = document.getElementById("tbodySalesServices");
+  if (!tbodyProducts || !tbodyServices) return;
+  
+  tbodyProducts.innerHTML = "";
+  tbodyServices.innerHTML = "";
+  let hasProducts = false, hasServices = false;
+  
+  salesActiveItems.forEach((item, index) => {
+    // ПАТТЕРН А: Строка ТОВАРОВ
+    if (item.type === "Товар") {
+      hasProducts = true;
+      const tr = document.createElement("tr");
+      tr.id = item.uid;
+      tr.innerHTML = `
+        <td style="font-family: monospace; color: var(--nexus-neon-dim); font-weight: bold;">${item.id}</td>
+        <td style="color: #fff !important; font-family: monospace;">${item.sku}</td>
+        <td style="font-weight: 600; color: #fff !important;">${item.name}</td>
+        <td style="text-align: center; font-weight: bold; color: ${item.stockQty === 0 ? '#ff3333' : '#fff'} !important;">${item.stockQty}</td>
+        <td>
+          <select onchange="updateRowPriceType(${index}, this.value)">
+            <option value="price_retail" ${item.selectedPriceType === 'price_retail' ? 'selected' : ''}>Розница</option>
+            <option value="price_wholesale" ${item.selectedPriceType === 'price_wholesale' ? 'selected' : ''}>Опт</option>
+            <option value="price_buy" ${item.selectedPriceType === 'price_buy' ? 'selected' : ''}>Закуп</option>
+            <option value="production_cost" ${item.selectedPriceType === 'production_cost' ? 'selected' : ''}>Себестоимость</option>
+          </select>
+        </td>
+        <td><div class="sales-text-frozen">${item.currentPrice.toFixed(2)}</div></td>
+        <td><input type="number" value="0" min="0" onfocus="this.select()" oninput="updateRowQty(${index}, this.value)"></td>
+        <td style="color: var(--nexus-text-sub); text-align: center; font-weight: 600;">${item.unit}</td>
+        <td><input type="number" value="${item.discountPercent}" min="0" max="100" oninput="updateRowDiscountPercent(${index}, this.value)"></td>
+        <td><input type="number" value="${item.discountRub}" min="0" oninput="updateRowDiscountRub(${index}, this.value)"></td>
+        <td style="text-align: center; font-size: 13px; font-family: monospace; font-weight: bold; color: ${item.vatRate === 'Без НДС' ? 'var(--nexus-text-sub)' : '#fff'} !important;">${item.vatRate}</td>
+        <td id="total-val-${item.uid}" style="font-family: monospace; font-weight: bold; color: var(--nexus-neon); text-align: right; font-size: 13px;">${item.totalRow.toFixed(2)}</td>
+        <td style="text-align: center;"><div class="nexus-row-delete-x" onclick="removeRowFromWizard(${index})">&times;</div></td>
+      `;
+      tbodyProducts.appendChild(tr);
+    } 
+    // ПАТТЕРН Б: Строка УСЛУГ (Вывод реальных единиц времени с сервера)
+    else if (item.type === "Услуга") {
+      hasServices = true;
+      const tr = document.createElement("tr");
+      tr.id = item.uid;
+      tr.innerHTML = `
+        <td style="font-family: monospace; color: var(--nexus-neon-dim); font-weight: bold;">${item.id}</td>
+        <td style="color: #fff !important; font-family: monospace;">${item.sku}</td>
+        <td style="font-weight: 600; color: #fff !important;">${item.name}</td>
+        
+        <td style="text-align: center; font-weight: 600;">${item.timeNormVal} ${item.timeNormUnit}</td>
+        
+        <td>
+          <select onchange="updateRowPriceType(${index}, this.value)">
+            <option value="price_retail" ${item.selectedPriceType === 'price_retail' ? 'selected' : ''}>Розница</option>
+            <option value="price_wholesale" ${item.selectedPriceType === 'price_wholesale' ? 'selected' : ''}>Опт</option>
+            <option value="price_buy" ${item.selectedPriceType === 'price_buy' ? 'selected' : ''}>Закуп</option>
+            <option value="production_cost" ${item.selectedPriceType === 'production_cost' ? 'selected' : ''}>Себестоимость</option>
+          </select>
+        </td>
+        <td><div class="sales-text-frozen">${item.currentPrice.toFixed(2)}</div></td>
+        <td><input type="number" value="0" min="0" onfocus="this.select()" oninput="updateRowQty(${index}, this.value)"></td>
+        <td style="text-align: center; font-weight: 600;">${item.durationVal} ${item.durationUnit}</td>
+        <td><input type="number" value="${item.discountPercent}" min="0" max="100" oninput="updateRowDiscountPercent(${index}, this.value)"></td>
+        <td><input type="number" value="${item.discountRub}" min="0" oninput="updateRowDiscountRub(${index}, this.value)"></td>
+        <td style="text-align: center; font-size: 13px; font-family: monospace; font-weight: bold; color: ${item.vatRate === 'Без НДС' ? 'var(--nexus-text-sub)' : '#fff'} !important;">${item.vatRate}</td>
+        <td id="total-val-${item.uid}" style="font-family: monospace; font-weight: bold; color: var(--nexus-neon); text-align: right; font-size: 13px;">${item.totalRow.toFixed(2)}</td>
+        <td style="text-align: center;"><div class="nexus-row-delete-x" onclick="removeRowFromWizard(${index})">&times;</div></td>
+      `;
+      tbodyServices.appendChild(tr);
+    }
+  });
+  
+  if (!hasProducts) tbodyProducts.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--nexus-text-sub); font-size: 11px; padding: 15px; border: 1px dashed rgba(28,253,255,0.1);">ОЧЕРЕДЬ ТОВАРОВ ПУСТА</td></tr>`;
+  if (!hasServices) tbodyServices.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--nexus-text-sub); font-size: 11px; padding: 15px; border: 1px dashed rgba(28,253,255,0.1);">ОЧЕРЕДЬ УСЛУГ ПУСТА</td></tr>`;
+  recalculateGlobalTotal();
+}
+
+// ====================================================================
+// Математическое ядро: пересчет одной строки на основе цен, количества и скидок
+// ====================================================================
+function calculateRowTotal(item) {
+  let baseSum = item.currentPrice * item.qty;
+  
+  // Применяем скидку в процентах
+  if (item.discountPercent > 0) {
+    baseSum = baseSum * (1 - item.discountPercent / 100);
+  }
+  
+  // Применяем скидку в рублях
+  if (item.discountRub > 0) {
+    baseSum = baseSum - item.discountRub;
+  }
+  
+  item.totalRow = baseSum > 0 ? baseSum : 0;
+}
+
+// ====================================================================
+// Полный пересчет глобального итога к оплате
+// ====================================================================
+function recalculateGlobalTotal() {
+  let globalSum = 0;
+  salesActiveItems.forEach(item => { 
+    globalSum += item.totalRow; 
+  });
+  
+  const display = document.getElementById("nexusSalesTotalSum");
+  if (display) {
+    display.textContent = globalSum.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+}
+
+// ====================================================================
+// ОБРАБОТЧИКИ СЛУЖЕБНЫХ СОБЫТИЙ ИЗ ТАБЛИЦЫ
+// ====================================================================
+function updateRowPriceType(index, type) {
+  const item = salesActiveItems[index];
+  item.selectedPriceType = type;
+  
+  if (type === "price_retail") {
+    item.currentPrice = item.priceRetail;
+  } else if (type === "price_wholesale") {
+    item.currentPrice = item.priceOpt;
+  } else if (type === "price_buy") {
+    item.currentPrice = item.priceBuy;
+  } else if (type === "production_cost") {
+    item.currentPrice = item.priceSelf;
+  }
+  
+  calculateRowTotal(item);
+  renderSalesTables();
+}
+
+// ====================================================================
+// Интеллектуальное управление количеством и обеспечением
+// ====================================================================
+function updateRowQty(index, value) {
+  const item = salesActiveItems[index];
+  let typedQty = parseInt(value);
+  
+  if (isNaN(typedQty)) typedQty = 0;
+  if (typedQty < 0) typedQty = 0;
+  
+  // Для Услуг минимальный ввод — 1, складской контроль не нужен
+  if (item.type === 'Услуга') {
+    if (typedQty < 1) typedQty = 1;
+    item.qty = typedQty;
+    item.provisionType = "Услуга"; // Фиксируем тип для бэкенда
+  } 
+  // УМНАЯ ЛОГИКА ДЛЯ ТОВАРОВ (БЕЗ БЛОКИРОВОК И ОГРАНИЧЕНИЙ ВВОДА)
+  else if (item.type === 'Товар') {
+    item.qty = typedQty;
+    
+    // Сценарий 1: Товара на складе вообще нет (остаток 0)
+    if (item.stockQty <= 0) {
+      item.qtyFromStock = 0;
+      item.qtyToOrder = typedQty;
+      item.provisionType = "Под заказ";
+      if (typedQty > 0) {
+        showModalConsoleMessage(`ТОВАР НЕ В НАЛИЧИИ. ${typedQty} ШТ. ПОД ЗАКАЗ!`, false);
+      }
+    } 
+    // Сценарий 2: Запросили больше, чем есть на остатке (Овердрафт)
+    else if (typedQty > item.stockQty) {
+      item.qtyFromStock = item.stockQty; // Забираем всё, что есть под чистую
+      item.qtyToOrder = typedQty - item.stockQty; // Остаток уходит в закупку
+      item.provisionType = "Частично под заказ";
+      showModalConsoleMessage(`ИЗ НАЛИЧИЯ: ${item.stockQty} шт. ПОД ЗАКАЗ: ${item.qtyToOrder} шт.`, false);
+    } 
+    // Сценарий 3: Товара хватает с запасом
+    else {
+      item.qtyFromStock = typedQty;
+      item.qtyToOrder = 0;
+      item.provisionType = "Из наличия";
+    }
+  }
+  
+  // ИСПРАВЛЕННЫЙ И ЧИСТЫЙ БЛОК ОБНОВЛЕНИЯ ИНТЕРФЕЙСА NEXUS
+  const rowEl = document.getElementById(item.uid);
+  if (rowEl) {
+    const inputEl = rowEl.querySelector('input[type="number"]');
+    if (inputEl) {
+      // Обновляем значение на экране только если это критически необходимо
+      if (inputEl.value !== typedQty.toString() && !isNaN(typedQty)) {
+        inputEl.value = typedQty;
+      }
+    }
+    
+    // СТРОГИЙ МОНОХРОМНЫЙ ДИЗАЙН: Никакого визуального хаоса, строка прозрачная
+    rowEl.style.backgroundColor = "transparent";
+  }
+
+  calculateRowTotal(item);
+  recalculateGlobalTotal();
+  
+  const targetTd = document.getElementById("total-val-" + item.uid);
+  if (targetTd) targetTd.textContent = item.totalRow.toFixed(2);
+  
+  // Вызываем обновленный бесшумный инспектор кассы
+  validateGlobalSalesStatus();
+}
+
+// ====================================================================
+// ТОЧЕЧНЫЙ ПЕРЕСЧЕТ: Скидка %
+// ====================================================================
+function updateRowDiscountPercent(index, value) {
+  const item = salesActiveItems[index];
+  item.discountPercent = parseFloat(value) || 0;
+  if (item.discountPercent > 100) item.discountPercent = 100;
+  if (item.discountPercent < 0) item.discountPercent = 0;
+  
+  calculateRowTotal(item);
+  recalculateGlobalTotal();
+  
+  const targetTd = document.getElementById("total-val-" + item.uid);
+  if (targetTd) targetTd.textContent = item.totalRow.toFixed(2);
+}
+
+// ====================================================================
+// ТОЧЕЧНЫЙ ПЕРЕСЧЕТ: Скидка руб.
+// ====================================================================
+function updateRowDiscountRub(index, value) {
+  const item = salesActiveItems[index];
+  item.discountRub = parseFloat(value) || 0;
+  if (item.discountRub < 0) item.discountRub = 0;
+  
+  calculateRowTotal(item);
+  recalculateGlobalTotal();
+  
+  const targetTd = document.getElementById("total-val-" + item.uid);
+  if (targetTd) targetTd.textContent = item.totalRow.toFixed(2);
+}
+
+  function removeRowFromWizard(index) {
+    salesActiveItems.splice(index, 1);
+    renderSalesTables();
+  }
+
+// ====================================================================
+// ОБРАБОТЧИКИ ОПЕРАЦИОННОЙ ПАНЕЛИ ДЕЙСТВИЙ
+// ====================================================================
+function closeSalesWizardModal() {
+  if (typeof google !== 'undefined' && google.script && google.script.host) {
+    google.script.host.close();
+  }
+}
+
+// ====================================================================
+// ОБРАБОТЧИК ОПЕРАЦИОННОЙ ПАНЕЛИ: Отправка сделки на бэкенд NEXUS
+// ====================================================================
+function executeSalesTransaction(statusType) {
+  if (salesActiveItems.length === 0) {
+    alert("Невозможно провести пустую сделку.");
+    return;
+  }
+  
+  // Блокируем кнопки от двойного клика, чтобы менеджер не отправил дубль при лаге интернета
+  const btnSale = document.getElementById("btnExecuteSale");
+  const btnReserve = document.getElementById("btnExecuteReserve");
+  if (btnSale) btnSale.disabled = true;
+  if (btnReserve) btnReserve.disabled = true;
+  
+  // Формируем идеальный пакет данных (Payload) для сервера
+  const payload = {
+    status: statusType, // 'Продано' или 'В резерве'
+    paymentType: document.getElementById("salesPaymentType").value,
+    manager: document.getElementById("salesManagerSelect").value,
+    comment: document.getElementById("salesGlobalComment").value,
+    totalSum: parseFloat(document.getElementById("nexusSalesTotalSum").textContent.replace(/\s/g, '').replace(',', '.')),
+    items: salesActiveItems.map(item => {
+      return {
+        id: item.id,
+        type: item.type,
+        sku: item.sku,
+        name: item.name,
+        qty: item.qty,
+        // Передаем наши вычисленные параметры обеспечения
+        qtyFromStock: item.type === 'Товар' ? (item.qtyFromStock ?? item.qty) : 0,
+        qtyToOrder: item.type === 'Товар' ? (item.qtyToOrder ?? 0) : 0,
+        provisionType: item.provisionType || (item.type === 'Услуга' ? 'Услуга' : 'Из наличия'),
+        price: item.currentPrice,
+        discountPercent: item.discountPercent,
+        discountRub: item.discountRub,
+        vatRate: item.vatRate,
+        totalRow: item.totalRow
+      };
+    })
+  };
+  
+  showModalConsoleMessage("ПРОТОКОЛ NEXUS: ОТПРАВКА СДЕЛКИ НА СЕРВЕР...", false);
+  
+  // ОФИЦИАЛЬНЫЙ МОСТ ГУГЛА: Передаем JSON на бэкенд в функцию saveTransactionRow
+  google.script.run
+    .withSuccessHandler(function(response) {
+       showModalConsoleMessage("СДЕЛКА УСПЕШНО ПРОВЕДЕНА!", false);
+       setTimeout(() => { closeSalesWizardModal(); }, 1500);
+    })
+    .withFailureHandler(function(error) {
+       alert("Критическая ошибка сервера NEXUS: " + error.message);
+       // В случае сбоя — возвращаем кнопкам активность
+       if (btnSale) btnSale.disabled = false;
+       if (btnReserve) btnReserve.disabled = false;
+    })
+    .saveTransactionRow(payload); // Эту функцию на бэкенде мы напишем следующей
+}
+
+// ====================================================================
+// ???
+// ====================================================================
+function generateSalesDocuments() {
+  alert("Формирование пакета документов (Чек / Накладная) запущено.");
+}
+
+// ====================================================================
+// Универсальный мягкий логгер для правого угла подвала модального окна
+// ====================================================================
+function showModalConsoleMessage(text, isError) {
+  // Связываем логгер с нашей зоной подсказок в правом углу подвала
+  const modalConsole = document.getElementById('salesStockAlertHint');
+  if (!modalConsole) return;
+  
+  modalConsole.style.opacity = "1";
+  modalConsole.style.color = isError ? "#ff3333" : "#ffaa00";
+  modalConsole.style.textShadow = isError ? "0 0 8px rgba(255, 51, 51, 0.5)" : "0 0 5px rgba(255, 170, 0, 0.4)";
+  modalConsole.textContent = text.toUpperCase();
+  
+  // Ровно через 3 секунды надпись плавно растает и исчезнет с экрана!
+  setTimeout(() => { modalConsole.style.opacity = "0"; }, 3000); 
+}
+
+</script>
+</body>
+</html>

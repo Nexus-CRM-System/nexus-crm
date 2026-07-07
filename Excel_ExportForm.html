@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+ 
+  <!-- УНИКАЛЬНАЯ ГЕОМЕТРИЯ ОКНА ЭКСПОРТА EXCEL -->
+  <style>
+    .import-container {
+      flex: 1 !important; 
+      overflow-y: auto !important; 
+      overflow-x: hidden !important;
+      padding-right: 5px !important;
+      min-height: 0 !important; 
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .import-container::-webkit-scrollbar { width: 4px !important; }
+    .import-container::-webkit-scrollbar-track { background: #04141d !important; }
+    .import-container::-webkit-scrollbar-thumb { background: rgba(28, 253, 255, 0.3) !important; border-radius: 3px !important; }
+    .import-container::-webkit-scrollbar-thumb:hover { background: #1cfdff !important; }
+    
+    .import-table { width: 100% !important; border-collapse: collapse !important; margin-top: 5px !important; box-sizing: border-box !important; }
+    .import-table th, .import-table td { padding: 5px 8px !important; border: 1px solid rgba(28, 253, 255, 0.25) !important; text-align: left !important; vertical-align: middle !important; }
+    .import-table th { background: #04141d !important; color: #1cfdff !important; text-transform: uppercase !important; font-size: 11px !important; letter-spacing: 1px !important; font-weight: 700 !important; }
+    
+    .arrow-cell { text-align: center !important; color: #1cfdff !important; font-size: 14px !important; font-weight: bold !important; width: 40px !important; text-shadow: 0 0 5px rgba(28, 253, 255, 0.6) !important; }
+    .crm-label { font-size: 11px !important; font-weight: bold !important; text-transform: uppercase !important; color: #fff !important; letter-spacing: 0.5px !important; }
+  </style>
+</head>
+<body>
+  <div class="full-screen-wrapper">
+    
+    <div id="hudHeader" style="border-bottom: 1px solid rgba(28, 253, 255, 0.3); padding-bottom: 8px; margin-bottom: 5px; flex-shrink: 0;">
+      <h2 style="color: #1cfdff; margin: 0; text-transform: uppercase; letter-spacing: 1.5px; font-size: 14px; text-align: center; text-shadow: 0 0 8px rgba(28, 253, 255, 0.5);">
+        СОПОСТАВЛЕНИЕ КОЛОНОК ➔ ДЛЯ ЭКСПОРТА В EXCEL
+      </h2>
+    </div>
+    
+    <div class="import-container" id="mainConfigBody">
+      <table class="import-table">
+        <thead>
+          <tr>
+            <th style="width: 45%;">Поле системы CRM</th>
+            <th style="width: 10%; text-align:center;">Направление</th>
+            <th style="width: 45%;">Колонка в Excel файле</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="crm-label" id="lbl_id">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_id" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_record_type">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_record_type" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_code_type">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_code_type" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_code_value">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_code_value" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_name">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_name" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_brand">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_brand" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_sku">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_sku" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_barcode">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_barcode" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_category">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_category" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_subcategory">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_subcategory" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_group">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_group" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_modification">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_modification" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_stock_qty">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_stock_qty" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_min_stock_qty">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_min_stock_qty" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_status">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_status" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_production_year">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_production_year" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_warranty_val">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_warranty_val" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_weight_val">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_weight_val" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_price_buy">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_price_buy" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_price_wholesale">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_price_wholesale" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_price_retail">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_price_retail" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_production_cost">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_production_cost" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_time_norm_val">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_time_norm_val" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_duration_val">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_duration_val" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_responsible_user">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_responsible_user" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_warehouse_cell">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_warehouse_cell" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_calc_type">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_calc_type" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_specification">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_specification" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_description">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_description" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_photos_raw">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_photos_raw" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+          <tr><td class="crm-label" id="lbl_internal_comment">&nbsp;</td><td class="arrow-cell">➔</td><td><select name="exp_internal_comment" class="col-selector java-letters" onchange="lockExportDuplicateSelectors()"></select></td></tr>
+        </tbody>
+      </table>
+    </div> 
+    
+    <!-- НИЖНИЙ СТАЛЬНОЙ ПОЯС УПРАВЛЕНИЯ ЭКСПОРТОМ -->
+    <div class="submit-panel">
+      <div class="buttons-row" id="actionPanelBody" style="display: flex; gap: 12px; justify-content: flex-start; align-items: center; width: 100%; position: relative;">
+        <button type="button" class="hud-btn" id="startExportBtn" onclick="executeExcelExportWorkflow()">Запустить экспорт</button>
+        <button type="button" class="hud-btn" onclick="google.script.host.close()">Выйти</button>
+        
+        <!-- HUD СТАТУСА (МЯГКИЙ ЯНТАРЬ) -->
+        <div id="importHUD" style="display: none; position: absolute; right: 0; color: #ffaa00; font-family: monospace; font-size: 11px; font-weight: bold; text-transform: uppercase; text-shadow: 0 0 5px rgba(255,170,0,0.4); white-space: nowrap;"></div>
+      </div>
+    </div>
+  </div> <!-- Конец .full-screen-wrapper -->
+
+<script>
+
+// ====================================================================
+// АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ МАТРИЦЫ КОЛОНОК EXCEL И ДИНАМИЧЕСКИЙ ПЕРЕВОД ЗАГЛУШЕК
+// ====================================================================
+  window.onload = function() {
+    const selectors = document.querySelectorAll('.java-letters');
+    let columns = [];
+    
+    // Генерируем одиночные колонки от A до Z
+    for (let i = 0; i < 26; i++) { columns.push(String.fromCharCode(65 + i)); }
+    // Генерируем сдвоенные колонки от AA до AZ
+    for (let i = 0; i < 26; i++) { columns.push("A" + String.fromCharCode(65 + i)); }
+    
+    // Мягко забираем живую карту из бэкенда, переданную через шаблонизатор GAS
+    const map = <?!= JSON.stringify(catalog_map) ?>;
+    
+    if (map) {
+      const setLabel = (id, labelText) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = labelText;
+      };
+      
+      // Накатываем актуальные русские имена строк прямо из Констант
+      setLabel('lbl_id', map.id.label);
+      setLabel('lbl_record_type', map.record_type.label);
+      setLabel('lbl_code_type', map.code_type.label);
+      setLabel('lbl_code_value', map.code_value.label);
+      setLabel('lbl_name', map.name.label);
+      setLabel('lbl_brand', map.brand.label);
+      setLabel('lbl_sku', map.sku.label);
+      setLabel('lbl_barcode', map.barcode.label);
+      setLabel('lbl_category', map.category.label);
+      setLabel('lbl_subcategory', map.subcategory.label);
+      setLabel('lbl_group', map.group.label);
+      setLabel('lbl_modification', map.modification.label);
+      setLabel('lbl_stock_qty', map.stock_qty.label);
+      setLabel('lbl_min_stock_qty', map.min_stock_qty.label);
+      setLabel('lbl_status', map.status.label);
+      setLabel('lbl_production_year', map.production_year.label);
+      setLabel('lbl_warranty_val', map.warranty_val.label);
+      setLabel('lbl_weight_val', map.weight_val.label);
+      setLabel('lbl_price_buy', map.price_buy.label);
+      setLabel('lbl_price_wholesale', map.price_wholesale.label);
+      setLabel('lbl_price_retail', map.price_retail.label);
+      setLabel('lbl_production_cost', map.production_cost.label);
+      setLabel('lbl_currency', map.currency.label);
+      setLabel('lbl_time_norm_val', map.time_norm_val.label);
+      setLabel('lbl_duration_val', map.duration_val.label);
+      setLabel('lbl_responsible_user', map.responsible_user.label);
+      setLabel('lbl_warehouse_cell', map.warehouse_cell.label);
+      setLabel('lbl_calc_type', map.calc_type.label);
+      setLabel('lbl_specification', map.specification.label);
+      setLabel('lbl_description', map.description.label);
+      setLabel('lbl_photos_raw', map.photos_raw.label);
+      setLabel('lbl_internal_comment', map.internal_comment.label);
+      setLabel('lbl_vendor_supplier', map.vendor_supplier.label);
+    }
+    
+    selectors.forEach((select) => {
+      select.innerHTML = "";
+      
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = ""; 
+      emptyOpt.textContent = "НЕ ЭКСПОРТИРОВАТЬ ПОЛЕ"; // Твой эталонный статус
+      emptyOpt.selected = true; // ГАРАНТИРУЕМ: это поле выбрано по умолчанию во всех селекторах при старте!
+      select.appendChild(emptyOpt);
+      
+      columns.forEach((letter) => {
+        let opt = document.createElement('option');
+        opt.value = letter;
+        opt.textContent = "Колонка " + letter;
+        select.appendChild(opt);
+      });
+    });
+    
+    // При первой загрузке все списки пусты ("НЕ ЭКСПОРТИРОВАТЬ"), поэтому все буквы открыты и доступны
+    selectors.forEach(select => {
+      const options = select.options;
+      for (let i = 0; i < options.length; i++) {
+        options[i].disabled = false;
+        options[i].style.color = "#fff";
+      }
+    });
+  };
+
+// ====================================================================
+// УМНЫЙ ЖИВОЙ БЛОКИРОВЩИК ДУБЛИКАТОВ КОЛОНОК EXCEL ПРИ ВЫГРУЗКЕ
+// ====================================================================
+  function lockExportDuplicateSelectors() {
+    const selectors = document.querySelectorAll('.java-letters');
+    const selectedValues = [];
+    
+    selectors.forEach(select => {
+      if (select.value !== "" && !select.disabled) {
+        selectedValues.push(select.value);
+      }
+    });
+    
+    selectors.forEach(select => {
+      const currentValue = select.value;
+      const options = select.options;
+      
+      for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        if (opt.value === "") continue; 
+        
+        if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
+          opt.disabled = true;
+          opt.style.color = "rgba(255, 255, 255, 0.25)";
+        } else {
+          opt.disabled = false;
+          opt.style.color = "#fff";
+        }
+      }
+    });
+  }
+
+// ====================================================================
+// БРОНЕБОЙНЫЙ ШЛЮЗ ПАКЕТНОЙ ВЫГРУЗКИ И ПРЯМОГО СКАЧИВАНИЯ БАЙТ
+// ====================================================================
+  function executeExcelExportWorkflow() {
+    const selectors = document.querySelectorAll('.col-selector');
+    const mapping = {};
+    
+    selectors.forEach(select => {
+      if (select.value !== "" && !select.disabled) { 
+        mapping[select.name] = select.value; 
+      }
+    });
+    
+    const startBtn = document.getElementById('startExportBtn');
+    const hud = document.getElementById('importHUD');
+    if (!startBtn || !hud) return;
+    
+    startBtn.disabled = true;
+    startBtn.innerText = "ОБРАБОТКА...";
+    hud.innerHTML = "ЭКСПОРТ ДАННЫХ... ОЖИДАЙТЕ";
+    hud.style.display = 'block';
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            hud.style.display = 'none';
+            
+            const headerTitle = document.querySelector('#hudHeader h2');
+            if (headerTitle) { headerTitle.innerHTML = "СТАТУС ОПЕРАЦИИ"; }
+            
+            // Автономный байтовый поток скачивания .xlsx
+            const byteCharacters = atob(result.base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+            
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = result.filename;
+            document.body.appendChild(link);
+            link.click(); 
+            document.body.removeChild(link);
+            
+            const mainBody = document.getElementById('mainConfigBody');
+            const actPanel = document.getElementById('actionPanelBody');
+            if (mainBody && actPanel) {
+              mainBody.innerHTML = `
+                <div style="padding: 50px 10px; text-align: center; border: 1px dashed rgba(28,253,255,0.3); background: #04141d; margin-top: 25px; border-radius: 4px; font-family: inherit; min-height: 250px; box-sizing: border-box;">
+                  <div style="font-size: 13px; font-weight: bold; margin-bottom: 12px; color: #fff; text-transform: uppercase; text-shadow: 0 0 5px rgba(28, 253, 255, 0.4);">ОПЕРАЦИЯ ЗАВЕРШЕНА УСПЕШНО</div>
+                  <div style="font-size: 12px; color: #00ff66; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);">${result.msg.toUpperCase()}</div>
+                  <div style="font-size: 11px; color: rgba(28, 253, 255, 0.7); text-transform: uppercase;">Файл XLSX сохранен в папку "Загрузки" вашего компьютера.</div>
+                </div>
+              `;
+              actPanel.innerHTML = `<button type="button" class="hud-btn" onclick="google.script.host.close()">ЗАКРЫТЬ ТЕРМИНАЛ</button>`;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          hud.innerHTML = " [КРИТИЧЕСКИЙ СБОЙ СЕТИ]: " + err.message;
+          startBtn.disabled = false;
+          startBtn.innerText = "Запустить экспорт";
+        })
+        .processDynamicExcelExport(mapping);
+    }
+  }
+</script>
+</body>
+</html>

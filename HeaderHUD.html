@@ -1,0 +1,58 @@
+<style>
+  /* ЛОКАЛЬНЫЕ СТИЛИ ВЕРХНЕГО ЧЕРДАКА NEXUS */
+  .nexus-top-hud {
+    height: 60px;
+    flex-shrink: 0;
+    background: #04141d;
+    border-bottom: 1px solid var(--nexus-neon);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    box-shadow: 0 0 15px rgba(28, 253, 255, 0.1);
+    box-sizing: border-box;
+  }
+  .hud-logo {
+    font-family: monospace;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--nexus-neon);
+    text-shadow: 0 0 10px rgba(28, 253, 255, 0.5);
+  }
+  .hud-tabs {
+    display: flex; gap: 10px;
+  }
+  .hud-tab-btn {
+    background: rgba(28, 253, 255, 0.05);
+    border: 1px solid var(--nexus-neon-dim);
+    color: #8ab4f8;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  .hud-tab-btn.active, .hud-tab-btn:hover {
+    background: rgba(28, 253, 255, 0.15);
+    border-color: var(--nexus-neon);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(28, 253, 255, 0.2);
+  }
+</style>
+
+<!-- ВЕРХНИЙ НЕОНОВЫЙ ЧЕРДАК НАВИГАЦИИ NEXUS -->
+<div class="nexus-top-hud">
+  <div class="hud-logo">N E X U S</div>
+  <div class="hud-tabs">
+    <button class="hud-tab-btn active" onclick="switchWebModule('catalog')">Каталог</button>
+    <button class="hud-tab-btn" onclick="switchWebModule('clients')">Клиенты</button>
+    <button class="hud-tab-btn" onclick="switchWebModule('sales')" disabled style="opacity:0.3;">Продажи</button>
+    <button class="hud-tab-btn" onclick="switchWebModule('analytics')" disabled style="opacity:0.3;">Аналитика</button>
+  </div>
+  <div>
+    <button class="hud-tab-btn" style="border-color:#ffaa00;color:#ffaa00;font-size:11px;">🌙 ТЕМА</button>
+  </div>
+</div>

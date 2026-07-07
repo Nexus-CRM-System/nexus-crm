@@ -1,0 +1,427 @@
+<style>
+/* ====================================================================
+  NEXUS CRM — ГЛОБАЛЬНАЯ СИСТЕМНАЯ МАТРИЦА СТИЛЕЙ (COMMERCIAL CORE)
+  ==================================================================== */
+:root {
+  /* Фирменная неоновая палитра NEXUS */
+  --nexus-bg-deep: #04141d;
+  --nexus-bg-field: #041620;
+  --nexus-bg-window: #061e2a;
+  --nexus-neon: #1cfdff;
+  --nexus-neon-hover: #5effff;
+  --nexus-amber: #ffaa00;
+  --nexus-amber-hover: #ffbc33;
+  --nexus-neon-dim: rgba(28, 253, 255, 0.45);
+  --nexus-text-sub: rgba(28, 253, 255, 0.5);
+  
+  /* Жесткие коммерческие стандарты интерфейса */
+  --nexus-input-height: 28px;
+  --nexus-btn-height: 26px;
+  --nexus-text-main: #ffffff;
+  --nexus-text-muted: rgba(28, 253, 255, 0.8);
+  --nexus-border: 1px solid var(--nexus-neon);
+  --nexus-font: 'Segoe UI', Roboto, Helvetica, sans-serif;
+  /* ГЛОБАЛЬНЫЕ НАСТРОЙКИ ШРИФТОВ ДЛЯ ВСЕХ ТАБЛИЦ CRM NEXUS */
+  --nexus-table-th-size: 18px; /* Высота шрифта заголовков шапки */
+  --nexus-table-td-size: 16px; /* Высота шрифта данных в ячейках */
+}
+
+/* Базовый сброс — наследуется всеми окнами */
+html, body {
+  background-color: var(--nexus-bg-window) !important;
+  margin: 0; padding: 0;
+  font-family: var(--nexus-font);
+  color: var(--nexus-neon);
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+
+/* NEXUS GRID ALIGNMENT: Жесткая коммерческая соосность колонок Терминала Продаж */
+.nexus-sales-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important; /* Принудительно отключаем авто-расчет ширины браузером */
+}
+.nexus-col-id    { width: 5%  !important; text-align: center; }
+.nexus-col-art   { width: 10% !important; }
+.nexus-col-name  { width: 22% !important; }
+.nexus-col-metric{ width: 9%  !important; text-align: center; } /* Остаток или Норма времени */
+.nexus-col-type  { width: 12% !important; } /* Тип цены */
+.nexus-col-price { width: 9%  !important; } /* Цена */
+.nexus-col-qty   { width: 7%  !important; } /* Кол-во */
+.nexus-col-unit  { width: 6%  !important; text-align: center; } /* Ед.изм или Длительность */
+.nexus-col-disc1 { width: 7%  !important; } /* Скидка 1 */
+.nexus-col-disc2 { width: 7%  !important; } /* Скидка 2 */
+.nexus-col-vat   { width: 8%  !important; } /* НДС */
+.nexus-col-total { width: 10% !important; } /* Итого */
+.nexus-col-del   { width: 3%  !important; text-align: center; } /* Крестик удаления */
+
+/* Медиа-запросы для адаптивности сетки на ноутбуках и малых экранах */
+@media screen and (max-width: 1024px) {
+  .hud-grid-block {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; /* Перестраиваем 5 колонок в 3 */
+  }
+  .full-width {
+    grid-column: span 3 !important;
+  }
+}
+@media screen and (max-width: 768px) {
+  .hud-grid-block {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* В 2 колонки для малых окон */
+  }
+  .full-width {
+    grid-column: span 2 !important;
+  }
+}
+
+/* ====================================================================
+  БЛОК 1. ИЗОЛИРОВАННЫЙ КОРИДОР ДЛЯ БОЛЬШИХ МОДАЛЬНЫХ ОКОН (.full-screen-wrapper)
+  ==================================================================== */
+.full-screen-wrapper {
+  box-sizing: border-box !important; 
+  padding: 15px !important;
+  display: flex !important; 
+  flex-direction: column !important;
+  height: 100vh !important;
+  width: 100% !important;
+  gap: 12px !important;
+}
+
+/* Подписи полей строго для модальных окон */
+.full-screen-wrapper label { 
+  font-size: 12px !important; 
+  font-weight: 700 !important; 
+  text-transform: uppercase !important; 
+  margin-bottom: 6px !important; 
+  color: #00f3ff !important;
+  text-shadow: 0 0 5px rgba(0, 243, 255, 0.5) !important; 
+  letter-spacing: 0.5px !important;
+  display: block !important;
+}
+
+/* Строки ввода строго для модальных окон */
+.full-screen-wrapper input, 
+.full-screen-wrapper select, 
+.full-screen-wrapper textarea {
+  background: var(--nexus-bg-field) !important; 
+  border: var(--nexus-border) !important; 
+  color: var(--nexus-text-main) !important;
+  padding: 4px 6px !important; 
+  font-family: inherit !important; 
+  font-size: 12px !important;
+  box-sizing: border-box !important; 
+  border-radius: 2px !important; 
+  transition: all 0.2s ease !important;
+  height: var(--nexus-input-height) !important;
+  width: 100% !important;
+}
+.full-screen-wrapper textarea { height: auto !important; }
+
+.full-screen-wrapper input:focus, 
+.full-screen-wrapper select:focus, 
+.full-screen-wrapper textarea:focus { 
+  outline: none !important; 
+  border-color: #00f3ff !important; 
+  box-shadow: 0 0 10px var(--nexus-neon) !important; 
+  background: #072230 !important;
+}
+
+/* Кнопки строго для всех модальных окон (Формы и Карточки) */
+.full-screen-wrapper .hud-btn,
+.hud-card-wrapper .hud-btn {
+  background: transparent !important; 
+  border: 2px solid var(--nexus-neon) !important; 
+  color: var(--nexus-neon) !important; 
+  padding: 0 20px !important; 
+  font-family: inherit !important; 
+  font-weight: 700 !important; 
+  text-transform: uppercase !important; 
+  cursor: pointer !important; 
+  border-radius: 2px !important;
+  transition: all 0.15s ease-in-out !important; 
+  font-size: 11px !important; 
+  letter-spacing: 1px !important; 
+  box-shadow: 0 0 8px rgba(28, 253, 255, 0.2) !important;
+  box-sizing: border-box !important;
+  height: 32px !important; 
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+}
+.full-screen-wrapper .hud-btn:hover,
+.hud-card-wrapper .hud-btn:hover { 
+  background: var(--nexus-neon) !important; 
+  color: var(--nexus-bg-window) !important; 
+  box-shadow: 0 0 15px var(--nexus-neon) !important; 
+}
+
+/* Нижняя панель действий модальных окон */
+.submit-panel {
+  display: flex !important; 
+  justify-content: space-between !important; 
+  align-items: center !important;
+  border-top: var(--nexus-border) !important; 
+  padding-top: 10px !important; 
+  margin-top: auto !important; 
+  padding-bottom: 10px !important; 
+  flex-shrink: 0 !important; 
+  width: 100% !important; 
+  background-color: var(--nexus-bg-window) !important;
+}
+
+/* Крестик удаления картинок в форме */
+.nexus-delete-x {
+  position: absolute !important; 
+  right: -4px !important; 
+  top: 15px !important;
+  width: 16px !important; 
+  height: 16px !important;
+  background: var(--nexus-bg-deep) !important; 
+  border: var(--nexus-border) !important; 
+  color: var(--nexus-neon) !important;
+  border-radius: 50% !important; 
+  text-align: center !important; 
+  line-height: 13px !important; 
+  font-size: 10px !important; 
+  font-weight: bold !important;
+  cursor: pointer !important; 
+  display: none; 
+  box-shadow: 0 0 5px rgba(28, 253, 255, 0.5) !important;
+  transition: all 0.2s ease-in-out !important; 
+  z-index: 10 !important;
+}
+.nexus-delete-x:hover { 
+  background: var(--nexus-neon) !important; 
+  color: var(--nexus-bg-deep) !important; 
+  box-shadow: 0 0 12px var(--nexus-neon) !important; 
+  transform: scale(1.15) !important; 
+}
+
+/* ====================================================================
+  БЛОК 2. ИЗОЛИРОВАННЫЙ КОРИДОР СТИЛЕЙ ДЛЯ БОКОВОЙ ПАНЕЛИ (.nexus-sidebar-container)
+  ==================================================================== */
+.nexus-sidebar-container {
+  padding: 12px 4px 12px 10px !important;
+  background-color: var(--nexus-bg-window) !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.nexus-sidebar-container input {
+  background-color: #020c12 !important;
+  border: 1px solid rgba(28, 253, 255, 0.25) !important;
+  border-radius: 4px !important;
+  padding: 6px 30px 6px 10px !important;
+  font-size: 11px !important;
+  height: 30px !important;
+  line-height: 16px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  color: var(--nexus-text-main) !important;
+}
+
+.nexus-sidebar-container input:focus {
+  outline: none !important;
+  border-color: var(--nexus-neon) !important;
+  background-color: var(--nexus-bg-field) !important;
+  box-shadow: 0 0 8px rgba(28, 253, 255, 0.3) !important;
+}
+
+.nexus-sidebar-container .hud-btn {
+  background: transparent !important;
+  border: 1px solid var(--nexus-neon) !important;
+  color: var(--nexus-neon) !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  padding: 0 8px !important;
+  width: 100% !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-transform: uppercase !important;
+  box-sizing: border-box !important;
+  letter-spacing: 0px !important;
+  cursor: pointer !important;
+}
+.nexus-sidebar-container .hud-btn:hover {
+  background: var(--nexus-neon) !important;
+  color: var(--nexus-bg-window) !important;
+  box-shadow: 0 0 10px var(--nexus-neon) !important;
+}
+
+.nexus-sidebar-container .context-title-sub {
+  font-size: 10px !important;
+  color: var(--nexus-text-sub) !important;
+  margin-bottom: 2px !important;
+  margin-top: 4px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-header { 
+  display: flex !important; 
+  justify-content: space-between !important; 
+  align-items: center !important; 
+  margin-bottom: 6px !important; 
+  padding-right: 8px !important; 
+}
+.sidebar-title { 
+  font-size: 13px !important; 
+  font-weight: 700 !important; 
+  text-transform: uppercase !important; 
+  letter-spacing: 1.5px !important; 
+}
+.burger-menu-btn { 
+  background: transparent !important; 
+  border: 1px solid rgba(28, 253, 255, 0.4) !important; 
+  color: var(--nexus-neon) !important; 
+  width: 32px !important; 
+  height: 28px !important; 
+  font-size: 14px !important; 
+  cursor: pointer !important; 
+  border-radius: 4px !important; 
+  display: flex !important; 
+  align-items: center !important; 
+  justify-content: center !important; 
+  transition: all 0.15s ease !important; 
+}
+.burger-menu-btn:hover { 
+  background: rgba(28, 253, 255, 0.1) !important; 
+  border-color: var(--nexus-neon) !important; 
+  box-shadow: 0 0 8px var(--nexus-neon) !important; 
+}
+.current-tab-indicator { 
+  text-align: center !important; 
+  font-size: 10px !important; 
+  font-weight: 700 !important; 
+  color: var(--nexus-neon) !important; 
+  letter-spacing: 1px !important; 
+  margin-bottom: 10px !important; 
+  text-transform: uppercase !important; 
+  padding-right: 8px !important; 
+}
+.nav-grid { 
+  display: none; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 6px; 
+  margin-bottom: 10px; 
+  background: var(--nexus-bg-deep); 
+  padding: 8px; 
+  border: 1px solid rgba(0, 243, 255, 0.2); 
+  border-radius: 4px; 
+  margin-right: 8px; 
+}
+.nav-btn { 
+  background: transparent !important; 
+  border: 1px solid rgba(0, 243, 255, 0.3) !important; 
+  color: #00f3ff !important; 
+  border-radius: 2px !important; 
+  padding: 6px 2px !important; 
+  font-size: 10px !important; 
+  font-weight: 600 !important; 
+  text-transform: uppercase !important; 
+  cursor: pointer !important; 
+  text-align: center !important; 
+}
+.nav-btn:hover, .nav-btn.active { 
+  background: #00f3ff !important; 
+  color: var(--nexus-bg-window) !important; 
+  border-color: #00f3ff !important; 
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.4) !important; 
+}
+
+.search-input-wrapper { 
+  position: relative !important; 
+  width: 100% !important; 
+  box-sizing: border-box !important; 
+}
+.nexus-sidebar-container .search-input-wrapper { 
+  margin-bottom: 4px !important; 
+}
+.nexus-sidebar-container .nexus-clear-btn { 
+  position: absolute !important; 
+  right: 18px !important; 
+  top: 50% !important; 
+  transform: translateY(-50%) !important; 
+  height: auto !important; 
+  line-height: 1 !important; 
+  background: transparent !important; 
+  border: none !important; 
+  color: rgba(28, 253, 255, 0.4) !important; 
+  font-size: 18px !important; 
+  font-weight: bold !important; 
+  cursor: pointer !important; 
+  user-select: none !important; 
+}
+.nexus-sidebar-container .nexus-clear-btn:hover { 
+  color: var(--nexus-neon) !important; 
+}
+
+.section-divider { 
+  border-top: 1px solid rgba(0, 243, 255, 0.12) !important; 
+  margin: 8px 0 !important; 
+  flex-shrink: 0 !important; 
+  margin-right: 8px !important; 
+}
+.scrollable-content-zone { 
+  flex: 1 !important; 
+  overflow-y: auto !important; 
+  box-sizing: border-box !important; 
+  margin-bottom: 8px !important; 
+  padding-right: 8px !important; 
+}
+
+
+.sidebar-status-footer { 
+  flex-shrink: 0 !important; 
+  margin-top: auto !important; 
+  border-top: 1px dashed rgba(0, 243, 255, 0.15) !important; 
+  padding-top: 6px !important; 
+  padding-right: 8px !important; 
+  min-height: 40px !important; 
+  box-sizing: border-box !important; 
+}
+.nexus-logger-alert { 
+  font-family: var(--nexus-font) !important; 
+  font-size: 11px !important; 
+  font-weight: 700 !important; 
+  text-transform: uppercase !important; 
+  letter-spacing: 0.5px !important; 
+  text-align: center !important; 
+}
+
+/* ==================================================================== */
+/* ПРЕМИАЛЬНЫЙ НЕОНОВЫЙ СКРОЛЛБАР NEXUS (ГЛОБАЛЬНЫЙ СТИЛЬ СИСТЕМЫ)       */
+/* ==================================================================== */
+::-webkit-scrollbar {
+  width: 12px !important; /* Сделали чуть толще для идеального захвата мышкой */
+  height: 12px !important;
+  background: #020c12 !important;
+}
+::-webkit-scrollbar-track {
+  background: #020a0f !important;
+  border: 1px solid rgba(28, 253, 255, 0.05) !important;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--nexus-neon-dim) !important;
+  border-radius: 6px !important;
+  border: 2px solid #020a0f !important;
+  transition: all 0.2s ease !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nexus-neon) !important;
+  box-shadow: 0 0 10px var(--nexus-neon), 0 0 20px var(--nexus-neon) !important;
+  cursor: pointer !important;
+}
+::-webkit-scrollbar-corner {
+  background: #020a0f !important;
+}
+
+
+</style>

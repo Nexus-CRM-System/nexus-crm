@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+ 
+  <!-- УНИКАЛЬНАЯ ГЕОМЕТРИЯ ОКНА ИМПОРТА EXCEL -->
+  <style>
+    .import-container {
+      flex: 1 !important; 
+      overflow-y: auto !important; 
+      overflow-x: hidden !important;
+      padding-right: 5px !important;
+      min-height: 0 !important; 
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .import-container::-webkit-scrollbar { width: 4px !important; }
+    .import-container::-webkit-scrollbar-track { background: #04141d !important; }
+    .import-container::-webkit-scrollbar-thumb { background: rgba(28, 253, 255, 0.3) !important; border-radius: 3px !important; }
+    .import-container::-webkit-scrollbar-thumb:hover { background: #1cfdff !important; }
+    
+    .import-table { width: 100% !important; border-collapse: collapse !important; margin-top: 5px !important; box-sizing: border-box !important; }
+    .import-table th, .import-table td { padding: 5px 8px !important; border: 1px solid rgba(28, 253, 255, 0.25) !important; text-align: left !important; vertical-align: middle !important; }
+    .import-table th { background: #04141d !important; color: #1cfdff !important; text-transform: uppercase !important; font-size: 11px !important; letter-spacing: 1px !important; font-weight: 700 !important; }
+    
+    .arrow-cell { text-align: center !important; color: #1cfdff !important; font-size: 14px !important; font-weight: bold !important; width: 40px !important; text-shadow: 0 0 5px rgba(28, 253, 255, 0.6) !important; }
+    .crm-label { font-size: 11px !important; font-weight: bold !important; text-transform: uppercase !important; color: #fff !important; letter-spacing: 0.5px !important; }
+  </style>
+</head>
+<body>
+  <div class="full-screen-wrapper">
+    
+    <div id="hudHeader" style="border-bottom: 1px solid rgba(28, 253, 255, 0.3); padding-bottom: 8px; margin-bottom: 5px; flex-shrink: 0;">
+      <h2 style="color: #1cfdff; margin: 0; text-transform: uppercase; letter-spacing: 1.5px; font-size: 14px; text-align: center; text-shadow: 0 0 8px rgba(28, 253, 255, 0.5);">
+        СОПОСТАВЛЕНИЕ КОЛОНОК ➔ ДЛЯ ИМПОРТА ИЗ EXCEL
+      </h2>
+    </div>
+    
+    <div class="import-container" id="mainConfigBody">
+      <table class="import-table">
+        <thead>
+          <tr>
+            <th style="width: 45%;">Колонка в Excel файле</th>
+            <th style="width: 10%; text-align:center;">Направление</th>
+            <th style="width: 45%;">Поле системы CRM</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><select name="imp_record_type" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_record_type">&nbsp;</td></tr>
+          <tr><td><select name="imp_vid_id" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_code_type">&nbsp;</td></tr>
+          <tr><td><select name="imp_item_id_val" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_code_value">&nbsp;</td></tr>
+          <tr><td><select name="imp_name" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_name">&nbsp;</td></tr>
+          <tr><td><select name="imp_brand" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_brand">&nbsp;</td></tr>
+          <tr><td><select name="imp_sku" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_sku">&nbsp;</td></tr>
+          <tr><td><select name="imp_barcode" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_barcode">&nbsp;</td></tr>
+          <tr><td><select name="imp_category" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_category">&nbsp;</td></tr>
+          <tr><td><select name="imp_subcategory" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_subcategory">&nbsp;</td></tr>
+          <tr><td><select name="imp_group" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_group">&nbsp;</td></tr>
+          <tr><td><select name="imp_mod" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_modification">&nbsp;</td></tr>
+          <tr><td><select name="imp_stock" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_stock_qty">&nbsp;</td></tr>
+          <tr><td><select name="imp_min_stock" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_min_stock_qty">&nbsp;</td></tr>
+          <tr><td><select name="imp_year" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_production_year">&nbsp;</td></tr>
+          <tr><td><select name="imp_warranty" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_warranty_val">&nbsp;</td></tr>
+          <tr><td><select name="imp_weight" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_weight_val">&nbsp;</td></tr>
+          <tr><td><select name="imp_price_buy" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_price_buy">&nbsp;</td></tr>
+          <tr><td><select name="imp_price_opt" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_price_wholesale">&nbsp;</td></tr>
+          <tr><td><select name="imp_price_retail" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_price_retail">&nbsp;</td></tr>
+          <tr><td><select name="imp_prod_cost" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_production_cost">&nbsp;</td></tr>          
+          <tr><td><select name="imp_currency" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_currency">&nbsp;</td></tr>
+          <tr><td><select name="imp_time_norm" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_time_norm_val">&nbsp;</td></tr>
+          <tr><td><select name="imp_duration" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_duration_val">&nbsp;</td></tr>
+          <tr><td><select name="imp_responsible" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_responsible_user">&nbsp;</td></tr>
+          <tr><td><select name="imp_cell" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_warehouse_cell">&nbsp;</td></tr>
+          <tr><td><select name="imp_calc_type" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_calc_type">&nbsp;</td></tr>
+          <tr><td><select name="imp_specification" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_specification">&nbsp;</td></tr>
+          <tr><td><select name="imp_description" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_description">&nbsp;</td></tr>
+          <tr><td><select name="imp_photos" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_photos_raw">&nbsp;</td></tr>
+          <tr><td><select name="imp_comment" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_internal_comment">&nbsp;</td></tr>
+          <tr><td><select name="imp_supplier" class="java-letters" onchange="lockImportDuplicateSelectors()"></select></td><td class="arrow-cell">➔</td><td class="crm-label" id="lbl_vendor_supplier">&nbsp;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- НИЖНИЙ СТАЛЬНОЙ ПОЯС УПРАВЛЕНИЯ ИМПОРТОМ -->
+    <div class="submit-panel">
+      <div class="buttons-row" id="actionPanelBody" style="display: flex; gap: 12px; justify-content: flex-start; align-items: center; width: 100%; position: relative;">
+        <button type="button" class="hud-btn" id="startImportBtn" onclick="executeExcelImportWorkflow()">Запустить импорт</button>
+        <button type="button" class="hud-btn" onclick="google.script.host.close()">Выйти</button>
+        
+        <!-- HUD СТАТУСА (МЯГКИЙ ЯНТАРЬ) -->
+        <div id="importHUD" style="display: none; position: absolute; right: 0; color: #ffaa00; font-family: monospace; font-size: 11px; font-weight: bold; text-transform: uppercase; text-shadow: 0 0 5px rgba(255,170,0,0.4); white-space: nowrap;"></div>
+      </div>
+    </div>
+  </div> <!-- Конец .full-screen-wrapper -->
+
+<script>
+
+// ====================================================================
+// ИНИЦИАЛИЗАЦИЯ И ДИНАМИЧЕСКИЙ ПЕРЕВОД ЗАГОВОРКОВ ИЗ КАРТЫ МЕТАДАННЫХ
+// ====================================================================
+  window.onload = function() {
+    const selectors = document.querySelectorAll('.java-letters');
+    let columns = [];
+    
+    // Генерируем одиночные колонки от A до Z
+    for (let i = 0; i < 26; i++) { columns.push(String.fromCharCode(65 + i)); }
+    // Генерируем сдвоенные колонки от AA до AZ
+    for (let i = 0; i < 26; i++) { columns.push("A" + String.fromCharCode(65 + i)); }
+    
+    // Передаем живую карту из бэкенда через шаблонизатор GAS
+    const map = <?!= JSON.stringify(catalog_map) ?>;
+    
+    if (map) {
+      const setLabel = (id, labelText) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = labelText;
+      };
+      
+      // Накатываем актуальные русские имена строк прямо из Констант
+      setLabel('lbl_record_type', map.record_type.label);
+      setLabel('lbl_code_type', map.code_type.label);
+      setLabel('lbl_code_value', map.code_value.label);
+      setLabel('lbl_name', map.name.label);
+      setLabel('lbl_brand', map.brand.label);
+      setLabel('lbl_sku', map.sku.label);
+      setLabel('lbl_barcode', map.barcode.label);
+      setLabel('lbl_weight_val', map.weight_val.label);
+      setLabel('lbl_production_year', map.production_year.label);
+      setLabel('lbl_warranty_val', map.warranty_val.label);
+      setLabel('lbl_category', map.category.label);
+      setLabel('lbl_subcategory', map.subcategory.label);
+      setLabel('lbl_group', map.group.label);
+      setLabel('lbl_modification', map.modification.label);
+      setLabel('lbl_currency', map.currency.label);
+      setLabel('lbl_price_buy', map.price_buy.label);
+      setLabel('lbl_price_wholesale', map.price_wholesale.label);
+      setLabel('lbl_price_retail', map.price_retail.label);
+      setLabel('lbl_production_cost', map.production_cost.label);
+      setLabel('lbl_stock_qty', map.stock_qty.label);
+      setLabel('lbl_time_norm_val', map.time_norm_val.label);
+      setLabel('lbl_min_stock_qty', map.min_stock_qty.label);
+      setLabel('lbl_warehouse_cell', map.warehouse_cell.label);
+      setLabel('lbl_status', map.status.label);
+      setLabel('lbl_duration_val', map.duration_val.label);
+      setLabel('lbl_responsible_user', map.responsible_user.label);
+      setLabel('lbl_calc_type', map.calc_type.label);
+      setLabel('lbl_specification', map.specification.label);
+      setLabel('lbl_description', map.description.label);
+      setLabel('lbl_photos_raw', map.photos_raw.label);
+      setLabel('lbl_internal_comment', map.internal_comment.label);
+      setLabel('lbl_vendor_supplier', map.vendor_supplier.label);
+    }
+    
+    // Заполняем выпадающие списки буквами
+    selectors.forEach((select) => {
+      select.innerHTML = "";
+      
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = ""; 
+      emptyOpt.textContent = "НЕ ИМПОРТИРОВАТЬ ПОЛЕ"; // Твой эталонный статус
+      emptyOpt.selected = true; // Выбран по умолчанию
+      select.appendChild(emptyOpt);
+      
+      columns.forEach((letter, index) => {
+        let opt = document.createElement('option');
+        opt.value = index; 
+        opt.textContent = "Колонка " + letter;
+        select.appendChild(opt);
+      });
+    });
+    
+    
+    // При старте все открыто, мягкая готовность
+    selectors.forEach(select => {
+      const options = select.options;
+      for (let i = 0; i < options.length; i++) {
+        options[i].disabled = false;
+        options[i].style.color = "#fff";
+      }
+    });
+  };
+
+// ====================================================================
+// МЯГКИЙ ЖИВОЙ БЛОКИРОВЩИК ДУБЛИКАТОВ КОЛОНОК EXCEL
+// ====================================================================
+  function lockImportDuplicateSelectors() {
+    const selectors = document.querySelectorAll('.java-letters');
+    const selectedValues = [];
+    
+    selectors.forEach(select => {
+      if (select.value !== "" && !select.disabled) {
+        selectedValues.push(select.value);
+      }
+    });
+    
+    selectors.forEach(select => {
+      const currentValue = select.value;
+      const options = select.options;
+      
+      for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        if (opt.value === "") continue; 
+        
+        if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
+          opt.disabled = true;
+          opt.style.color = "rgba(255, 255, 255, 0.25)";
+        } else {
+          opt.disabled = false;
+          opt.style.color = "#fff";
+        }
+      }
+    });
+  }
+
+// ====================================================================
+// ДВИЖОК СБОРА КАРТЫ СОПОСТАВЛЕНИЙ И ЗАПУСКА ИМПОРТА НА СЕРВЕРЕ
+// ====================================================================
+  function executeExcelImportWorkflow() {
+    const selectors = document.querySelectorAll('.java-letters');
+    const mapping = {};
+    
+    selectors.forEach(select => {
+      if (select.value !== "" && !select.disabled) { 
+        mapping[select.name] = Number(select.value); 
+      }
+    });
+    
+    const startBtn = document.getElementById('startImportBtn');
+    const hud = document.getElementById('importHUD');
+    if (!startBtn || !hud) return;
+    
+    startBtn.disabled = true;
+    startBtn.innerText = "ОБРАБОТКА...";
+    hud.innerHTML = "ИМПОРТ ДАННЫХ... ОЖИДАЙТЕ";
+    hud.style.display = 'block';
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hud.style.display = 'none';
+          
+          const headerTitle = document.querySelector('#hudHeader h2');
+          if (headerTitle) { headerTitle.innerHTML = "СТАТУС ОПЕРАЦИИ"; }
+          
+          const mainBody = document.getElementById('mainConfigBody');
+          const actPanel = document.getElementById('actionPanelBody');
+          
+          if (mainBody && actPanel) {
+            mainBody.innerHTML = `
+              <div style="padding: 50px 10px; text-align: center; border: 1px dashed rgba(28,253,255,0.3); background: #04141d; margin-top: 25px; border-radius: 4px; font-family: inherit; min-height: 250px; box-sizing: border-box;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 12px; color: #fff; text-transform: uppercase; text-shadow: 0 0 5px rgba(28, 253, 255, 0.4);">ОПЕРАЦИЯ ЗАВЕРШЕНА УСПЕШНО</div>
+                <div style="font-size: 12px; color: #00ff66; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);">Импортировано позиций: ${result}</div>
+                <div style="font-size: 11px; color: rgba(28, 253, 255, 0.7); text-transform: uppercase;">Все данные успешно интегрированы в Каталог CRM.</div>
+              </div>
+            `;
+            actPanel.innerHTML = `<button type="button" class="hud-btn" onclick="google.script.host.close()">ЗАКРЫТЬ ТЕРМИНАЛ</button>`;
+          }
+        })
+        .withFailureHandler(function(err) {
+          hud.innerHTML = " [КРИТИЧЕСКИЙ СБОЙ СЕРВЕРА]: " + err.message;
+          startBtn.disabled = false;
+          startBtn.innerText = "Запустить импорт";
+        })
+        .processExcelImport(mapping); 
+    }
+  }
+</script>
+</body>
+</html>

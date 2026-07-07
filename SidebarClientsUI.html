@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- Подключаем родительские стили NEXUS -->
+  <?!= include('StyleConstants'); ?>
+  <style>
+  html, body {
+    border: 2px solid var(--nexus-neon) !important;
+    box-shadow: inset 0 0 15px rgba(28, 253, 255, 0.2), 0 0 20px rgba(28, 253, 255, 0.15) !important;
+    height: 100vh; margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
+  }
+  </style>
+</head>
+<body>
+<div class="nexus-sidebar-container" style="display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;">
+  
+  <!-- ШАПКА ПУЛЬТА КЛИЕНТОВ -->
+  <div class="sidebar-header">
+    <div class="sidebar-title">Управление Базой</div>
+  </div>
+  <div class="current-tab-indicator" id="hudActiveModuleTag" style="color: #ffaa00; border-color: rgba(255, 170, 0, 0.3);">КЛИЕНТЫ</div>
+  
+  <!-- ЗОНА СКРОЛЛА КНОПОК -->
+  <div class="scrollable-content-zone" style="flex: 1; overflow-y: auto; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;">
+    
+    <div class="context-title-sub">Поиск по клиентам</div>
+    <div class="search-input-wrapper">
+      <input type="text" id="hudClientsSearch" placeholder="ФИО, Телефон, ИНН..." onkeydown="checkClientsEnterKey(event)">
+      <button class="nexus-clear-btn" onclick="resetClientsSearch()">&times;</button>
+    </div>
+    <button type="button" class="hud-btn" style="margin-top: 6px; margin-bottom: 8px;" onclick="runClientsSearch()">Выполнить Поиск</button>
+    
+    <div class="section-divider"></div>
+    
+    <div class="context-title-sub">Карточка контрагента</div>
+    <div class="search-input-wrapper">
+      <input type="text" id="hudClientCardId" placeholder="Введите ID клиента..." onkeydown="checkClientCardEnterKey(event)">
+      <button class="nexus-clear-btn" onclick="resetClientCardInput()">&times;</button>
+    </div>
+    <button type="button" class="hud-btn" style="margin-top: 6px; margin-bottom: 8px;" onclick="openClientCardById()">Открыть карточку</button>
+    
+    <div class="section-divider"></div>
+    
+    <div class="context-title-sub">Операции</div>
+    <!-- Наша главная кнопка создания -->
+    <button type="button" class="hud-btn" style="margin-bottom: 6px; border-color: var(--nexus-neon);" onclick="triggerAddClientFormModal()">+ Новый Клиент</button>
+    <button type="button" class="hud-btn" style="margin-bottom: 6px;" id="btnClientsImport" disabled>Импорт базы</button>
+    <button type="button" class="hud-btn" style="margin-bottom: 8px;" id="btnClientsExport" disabled>Экспорт базы</button>
+    
+    <div class="section-divider"></div>
+  </div>
+
+  <div class="sidebar-status-footer" style="padding: 10px; box-sizing: border-box; background: #020a0f;">
+    <div id="hudClientsConsole" class="nexus-logger-alert" style="text-align: center; transition: opacity 0.3s; opacity: 0; font-size: 11px;"></div>
+  </div>
+</div>
+
+<script>
+function showClientsConsole(msg, isError) {
+  const consoleEl = document.getElementById('hudClientsConsole');
+  if (!consoleEl) return;
+  consoleEl.textContent = msg;
+  consoleEl.style.color = isError ? '#ff3333' : '#1cfdff';
+  consoleEl.style.opacity = '1';
+  setTimeout(() => { consoleEl.style.opacity = '0'; }, 3000);
+}
+
+function checkClientsEnterKey(e) { if(e.keyCode===13) runClientsSearch(); }
+function runClientsSearch() { showClientsConsole("Поиск клиентов запущен...", false); }
+function resetClientsSearch() { document.getElementById('hudClientsSearch').value = ''; }
+
+function checkClientCardEnterKey(e) { if(e.keyCode===13) openClientCardById(); }
+function openClientCardById() { showClientsConsole("Запрос карточки клиента...", false); }
+function resetClientCardInput() { document.getElementById('hudClientCardId').value = ''; }
+
+// Шлюз, который мы свяжем с будущей формой Clients_AddForm
+function triggerAddClientFormModal() {
+  google.script.run.openModalClientForm();
+}
+</script>
+</body>
+</html>

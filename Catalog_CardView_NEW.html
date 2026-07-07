@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- ИМПОРТ ОБЩЕЙ ДИЗАЙН-СИСТЕМЫ NEXUS -->
+  <?!= include('StyleConstants'); ?>
+
+  <!-- УНИКАЛЬНАЯ ГЕОМЕТРИЯ ОКНА ПРОСМОТРА КАРТОЧКИ -->
+  <style>
+    .hud-card-wrapper {
+      padding: 15px !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      gap: 12px !important;
+      background-color: #061e2a !important; 
+      box-sizing: border-box !important;
+      height: 100vh !important; 
+      width: 100% !important;
+      overflow: hidden !important;
+    }
+    .hud-main-split { 
+      display: flex !important; 
+      gap: 20px !important; 
+      flex-wrap: wrap !important; 
+      flex: 1 !important; 
+      max-height: calc(100vh - 85px) !important;
+      overflow-y: auto !important; 
+      overflow-x: hidden !important;
+      padding-right: 5px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .hud-main-split::-webkit-scrollbar { width: 4px !important; }
+    .hud-main-split::-webkit-scrollbar-track { background: #04141d !important; }
+    .hud-main-split::-webkit-scrollbar-thumb { background: rgba(28, 253, 255, 0.3) !important; border-radius: 3px !important; }
+    .hud-main-split::-webkit-scrollbar-thumb:hover { background: #1cfdff !important; }
+    
+    .hud-left-wing { 
+      flex: 1.2 !important; 
+      min-width: 320px !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      gap: 5px !important; 
+    }
+    .hud-right-wing { 
+      flex: 1 !important; 
+      min-width: 320px !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      gap: 10px !important; 
+    }
+
+    /* Окно живого превью главного изображения */
+    .hud-photo-preview-zone {
+      height: 340px !important; 
+      border: 1px solid rgba(28, 253, 255, 0.3) !important; 
+      background: #041620 !important;
+      display: flex !important; 
+      align-items: center !important; 
+      justify-content: center !important; 
+      position: relative !important; 
+      border-radius: 4px !important;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.05) !important;
+      width: 100% !important;
+    }
+    .hud-main-img { max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; }
+    
+    /* Сетка миниатюр */
+    .hud-finance-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; width: 100% !important; }
+    .hud-grid-cell {
+      background: #041620 !important; border: 1px dashed rgba(28, 253, 255, 0.3) !important; aspect-ratio: 1 / 1 !important;
+      padding: 2px !important; display: flex !important; align-items: center !important; justify-content: center !important;
+      border-radius: 4px !important; transition: all 0.2s ease !important; cursor: pointer !important;
+    }
+    .hud-grid-cell:hover { border-color: #1cfdff !important; box-shadow: 0 0 10px rgba(28, 253, 255, 0.3) !important; }
+    
+    /* Выравнивание и жесткая калибровка шрифтов паспорта */
+    .hud-left-row-item { 
+      background: rgba(4, 22, 32, 0.6) !important; 
+      padding: 5px 10px !important; 
+      border-radius: 2px !important; 
+      border-left: 2px solid rgba(28, 253, 255, 0.2) !important; 
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Унификация текста паспорта: подписи и значения */
+    .hud-left-row-item .hud-label {
+      font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; 
+      color: rgba(0, 243, 255, 0.5) !important; letter-spacing: 0.5px !important; margin: 0 !important;
+    }
+    .hud-left-row-item .hud-value { 
+      font-size: 14px !important; /* Вернули комфортный крупный размер */
+      font-weight: 600 !important; 
+      color: #fff !important; 
+      margin: 0 !important; 
+    }
+    
+    /* Длинные текстовые блоки */
+    .hud-wide-text-block { 
+      background: #041620 !important; border-left: 4px solid #1cfdff !important; 
+      padding: 10px 14px !important; border-radius: 4px !important; width: 100% !important; box-sizing: border-box !important;
+    }
+    .hud-wide-text-block.comment-style { border-left-color: #ffaa00 !important; }
+    .hud-wide-val { font-size: 12px !important; color: #fff !important; line-height: 1.4 !important; margin-top: 4px !important; }
+  </style>
+
+</head>
+
+<body>
+  <div class="hud-card-wrapper">
+  <div class="hud-main-split">
+  
+  <!-- ЛЕВОЕ КРЫЛО: ТЕПЕРЬ ТУТ СТРОГО ПАСПОРТ ХАРАКТЕРИСТИК -->
+  <div class="hud-left-wing">
+  <div id="hudLeftWingPassport"></div>
+  </div>
+  
+  <!-- ПРАВОЕ КРЫЛО: МЕДИА-ЦЕНТР (ФОТО И МИНИАТЮРЫ) -->
+  <div class="hud-right-wing">
+  <div class="hud-label" style="margin-bottom: 2px;">Фотографии</div>
+  
+  <!-- СИСТЕМНЫЙ ИНДИКАТОР ЗАГРУЗКИ КАРТОЧКИ -->
+  <div id="hudCardLoader" style="display: block; color: #ffaa00; font-family: monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 4px 0; margin-bottom: 8px; background: transparent !important; border: none !important; box-shadow: none !important;">
+  ЗАГРУЗКА ДАННЫХ ... ПОДОЖДИТЕ
+  </div>
+  
+  <!-- Окно живого превью главного изображения -->
+  <div class="hud-photo-preview-zone">
+  <img id="hudMainImgView" class="hud-main-img" src="" alt="// ЗАГРУЗКА МАТРИЦЫ...">
+  </div>
+  
+  <!-- Сетка пятнашек картинками 3х3 -->
+  <div class="hud-finance-grid" id="hudFinanceGrid"></div>
+  </div>
+
+  <!-- ВЫНЕСЛИ ТЕКСТОВЫЙ ГИГАНТ ИЗ ПЛЕНА КОЛОНКИ НА СВОБОДУ (ЗАЙМЕТ 100% ШИРИНЫ) -->
+  <div id="hudWideTextContainer" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; margin-top: 10px;"></div>
+  </div> <!-- Конец .hud-main-split -->
+  
+  <!-- НИЖНИЙ СТАЛЬНОЙ ПОЯС: СТРОГИЕ КНОПКИ ДЕЙСТВИЙ -->
+  <div class="submit-panel">
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; width: 100%;">
+  <button type="button" class="hud-btn" id="nexusEditBtn" onclick="activateEditWorkflow()">Редактировать</button>
+  <button type="button" class="hud-btn" onclick="addItemToTradingCart()">Продажа</button>
+  <button type="button" class="hud-btn" onclick="shareCatalogItemInfo()">Отправить</button>
+  <button type="button" class="hud-btn" id="btnHidePos" onclick="triggerHideItem()">В Архив</button>
+  <button type="button" class="hud-btn" onclick="google.script.host.close()">Выйти</button>
+  </div>
+  </div>
+  </div> <!-- .hud-card-wrapper -->
+
+<script>
+
+// ====================================================================
+// ГЛОБАЛЬНЫЕ КИБЕР-ПЕРЕМЕННЫЕ ТЕРМИНАЛА
+// ====================================================================
+  const currentId = "<?= targetItemId ?>";
+  let currentActiveItemData = null;
+  let photos = []; 
+
+// ====================================================================
+// СВЕРХСКОРОСТНОЙ СТАРТ ОКНА С АВТОПРОВЕРКОЙ ПРАВ АДМИНИСТРАТОРА
+// ====================================================================
+  window.onload = function() {
+    if (!currentId) return;
+    document.body.style.overflowY = "auto";
+    document.body.style.height = "auto";
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          const loader = document.getElementById('hudCardLoader');
+          if (loader) loader.style.display = "none";
+          
+          renderHudCardView(response);
+        })
+        .withFailureHandler(function(err) {
+          console.error("Ошибка загрузки карточки: " + err.message);
+        })
+        .getCatalogCardDataById(currentId);
+    }
+  };
+
+// ====================================================================
+// БЕЗОПАСНЫЙ ПЕРЕХОД В РЕЖИМ РЕДАКТИРОВАНИЯ
+// ====================================================================
+  function activateEditWorkflow() {
+    let targetId = currentActiveItemData && currentActiveItemData.item_id ? currentActiveItemData.item_id : currentId;
+    const editBtn = document.getElementById('nexusEditBtn');
+    
+    if (editBtn) {
+      editBtn.disabled = true;
+      editBtn.innerText = "ОБРАБОТКА...";
+    }
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.switchFromViewToEditMode(targetId);
+    }
+  }
+
+// ====================================================================
+// ДВИЖОК ДИНАМИЧЕСКОЙ ОТРИСОВКИ ДАННЫХ ИЗ КОНСТАНТ
+// ====================================================================
+  function renderHudCardView(response) {
+    if (!response || !response.success) {
+      alert("Ошибка загрузки данных: " + (response ? response.msg : "Пустой ответ"));
+      return;
+    }
+    
+    const data = response.data;
+    const map = response.catalog_map; // Живая карта имен колонок
+    currentActiveItemData = data; 
+    photos = response.collected_photos || []; 
+    
+    const imgView = document.getElementById('hudMainImgView');
+    
+    function refreshMainPhotoView() {
+      if (imgView) {
+        // Ищем любую заполненную строку фотографии в массиве
+        let firstLivePhoto = photos.find(p => p && p.toString().trim() !== "");
+        
+        if (firstLivePhoto) {
+          imgView.src = nexusDriveLinkConverter(firstLivePhoto);
+          imgView.alt = "Главное фото позиции";
+        } else {
+          imgView.src = ""; 
+          imgView.alt = "// МЕДИА-МАТРИЦА ПОЗИЦИИ ПУСТА";
+        }
+      }
+    }
+    
+    refreshMainPhotoView();
+    
+    // ДВОЙНАЯ СТРАХОВКА: Если сервер прислал пустоту, чистим сырой текст прямо в браузере
+    const fallbackClean = (val) => {
+      if (!val) return 0;
+      let str = val.toString().replace(/[^0-9.]/g, '');
+      let num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    };
+
+    const stockNum = data._pure_stock !== undefined ? Number(data._pure_stock) : fallbackClean(data.stock_qty);
+    const minStockNum = data._pure_min_stock !== undefined ? Number(data._pure_min_stock) : fallbackClean(data.min_stock_qty);
+    const isService = data.record_type === "Услуга";
+    let stockColor = "#fff";
+    let stockShadow = "none";
+    
+    if (!isService) {
+      if (stockNum <= 0) {
+        stockColor = "#ff3333"; // Полный ноль — жесткий красный неон
+        stockShadow = "0 0 8px rgba(255, 51, 51, 0.6)";
+      } else if (stockNum < minStockNum) {
+        stockColor = "#ffaa00"; // Дефицит остатка — фирменный янтарный неон
+        stockShadow = "0 0 8px rgba(255, 170, 0, 0.6)";
+      }
+    }
+
+    const currencySign = data.currency || "₽";
+    const leftWing = document.getElementById('hudLeftWingPassport');
+    
+    if (leftWing && map) {
+      leftWing.innerHTML = ""; 
+      
+      // ИСПРАВЛЕНО: Имена (label) теперь берутся строго из таблицы Констант через map
+      const passportSpecs = [
+        { label: map.id.label, val: data.id },
+        { label: map.record_type.label, val: data.record_type },
+        { label: `${map.code_type.label} / ${map.code_value.label}`, val: data.code_type ? `${data.code_type} ${data.code_value || ''}` : data.code_value },
+        { label: map.name.label, val: data.name },
+        { label: map.brand.label, val: data.brand },
+        { label: map.sku.label, val: data.sku },
+        { label: map.barcode.label, val: data.barcode },
+        { label: map.category.label, val: data.category },
+        { label: map.subcategory.label, val: data.subcategory },
+        { label: map.group.label, val: data.group },
+        { label: map.modification.label, val: data.modification },
+        { label: map.stock_qty.label, val: (data.stock_qty !== undefined && data.stock_qty !== "") ? `${data.stock_qty} ${data.stock_unit || 'шт.'}` : "" },
+        { label: map.min_stock_qty.label, val: (data.min_stock_qty !== undefined && data.min_stock_qty !== "") ? `${data.min_stock_qty} ${data.stock_unit || 'шт.'}` : "" },
+        { label: map.status.label, val: data.status },
+        { label: map.production_year.label, val: data.production_year },
+        { label: map.warranty_val.label, val: data.warranty_val ? `${data.warranty_val} ${data.warranty_unit || ''}` : "" },
+        { label: map.weight_val.label, val: data.weight_val ? `${data.weight_val} ${data.weight_unit || ''}` : "" },
+        { label: map.price_buy.label, val: data.price_buy ? `${data.price_buy} ${currencySign}` : "" },
+        { label: map.price_wholesale.label, val: data.price_wholesale ? `${data.price_wholesale} ${currencySign}` : "" },
+        { label: map.price_retail.label, val: data.price_retail ? `${data.price_retail} ${currencySign}` : "" },
+        { label: map.production_cost.label, val: data.production_cost ? `${data.production_cost} ${currencySign}` : "" },
+        { label: map.time_norm_val.label, val: data.time_norm_val ? `${data.time_norm_val} ${data.time_norm_unit || ''}` : "" },
+        { label: map.duration_val.label, val: data.duration_val ? `${data.duration_val} ${data.duration_unit || ''}` : "" },
+        { label: map.responsible_user.label, val: data.responsible_user },
+        { label: map.warehouse_cell.label, val: data.warehouse_cell },
+        { label: map.calc_type.label, val: data.calc_type },
+        { label: map.vendor_supplier.label, val: data.vendor_supplier },
+        { label: map.vat_rate.label, val: data.vat_rate }
+      ];
+      
+      passportSpecs.forEach(item => {
+        if (item.val && item.val.toString().trim() !== "") {
+          const div = document.createElement('div');
+          div.className = "hud-left-row-item";
+          div.style.marginBottom = "5px";
+          
+          let textColor = "#fff";
+          let textShadow = "none";
+          let fontWeight = "600";
+          
+          // Проверяем по имени из констант для корректного перекрашивания остатка
+          if (item.label === map.stock_qty.label) {
+            textColor = stockColor;
+            textShadow = stockShadow;
+            if (stockColor !== "#fff") fontWeight = "700";
+          }
+          
+          div.innerHTML = `<span class="hud-label">${item.label}:</span> <span class="hud-value" style="color: ${textColor} !important; text-shadow: ${textShadow} !important; font-weight: ${fontWeight};">${item.val}</span>`;
+          leftWing.appendChild(div);
+        }
+      });
+    }
+    
+    // АРХИВНАЯ ЗАМОРОЗКА ИНТЕРФЕЙСА КАРТОЧКИ
+    const hideBtn = document.getElementById('btnHidePos');
+    const editBtn = document.getElementById('nexusEditBtn');
+    const saleBtn = document.querySelector('button[onclick="addItemToTradingCart()"]');
+    const shareBtn = document.querySelector('button[onclick="shareCatalogItemInfo()"]');
+    
+    if (data.status && (data.status.toLowerCase() === "архив")) {
+      if (editBtn) { editBtn.disabled = true; editBtn.style.opacity = "0.3"; editBtn.style.cursor = "not-allowed"; }
+      if (saleBtn) { saleBtn.disabled = true; saleBtn.style.opacity = "0.3"; saleBtn.style.cursor = "not-allowed"; }
+      if (shareBtn) { shareBtn.disabled = true; shareBtn.style.opacity = "0.3"; shareBtn.style.cursor = "not-allowed"; }
+      if (hideBtn) {
+        hideBtn.innerText = "Отменить архивацию";
+        hideBtn.style.borderColor = "#ffaa00";
+        hideBtn.style.color = "#ffaa00";
+        hideBtn.disabled = false; 
+        hideBtn.style.opacity = "1";
+        hideBtn.style.cursor = "pointer";
+      }
+    } else {
+      if (editBtn) { editBtn.disabled = false; editBtn.style.opacity = "1"; editBtn.style.cursor = "pointer"; }
+      if (saleBtn) { saleBtn.disabled = false; saleBtn.style.opacity = "1"; saleBtn.style.cursor = "pointer"; }
+      if (shareBtn) { shareBtn.disabled = false; shareBtn.style.opacity = "1"; shareBtn.style.cursor = "pointer"; }
+      if (hideBtn) {
+        hideBtn.innerText = "В Архив";
+        hideBtn.disabled = false;
+        hideBtn.style.opacity = "1";
+        hideBtn.style.cursor = "pointer";
+        hideBtn.style.borderColor = "#1cfdff";
+        hideBtn.style.color = "#1cfdff";
+      }
+    }
+    
+    const grid = document.getElementById('hudFinanceGrid');
+
+
+    function rebuildThumbsMatrix() {
+      if (!grid) return;
+      grid.innerHTML = "";
+      for (let i = 0; i < 10; i++) {
+        const cellBlock = document.createElement('div');
+        cellBlock.className = "hud-grid-cell";
+        
+        const imgData = photos[i]; 
+        if (imgData && imgData.toString().trim() !== "") {
+          const thumbImg = document.createElement('img');
+          thumbImg.src = nexusDriveLinkConverter(imgData);
+          thumbImg.style.cssText = "width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 2px;";
+          
+          cellBlock.onclick = function() {
+            // Меняем местами текущую первую живую картинку и выбранную миниатюру
+            let currentMainIdx = photos.findIndex(p => p && p.toString().trim() !== "");
+            if (currentMainIdx === -1) currentMainIdx = 0;
+            
+            const tempMain = photos[currentMainIdx];
+            photos[currentMainIdx] = photos[i];
+            photos[i] = tempMain;
+            
+            refreshMainPhotoView();
+            rebuildThumbsMatrix();
+          };
+          cellBlock.appendChild(thumbImg);
+        } else {
+          cellBlock.innerHTML = `<span class="hud-label" style="color: rgba(0, 243, 255, 0.1); font-size: 8px; margin:0;">СЛОТ 0${i+1}</span>`;
+        }
+        grid.appendChild(cellBlock);
+      }
+    }
+
+    
+    rebuildThumbsMatrix();
+    
+    const wideContainer = document.getElementById('hudWideTextContainer');
+    if (wideContainer && map) {
+      wideContainer.innerHTML = "";
+      
+      // Строгое соответствие системной карте метаданных "specification"
+      const wideFields = [
+        { 
+          label: (map.specification && map.specification.label) ? map.specification.label : "Спецификация", 
+          val: data.specification, 
+          style: '' 
+        },
+        { 
+          label: (map.description && map.description.label) ? map.description.label : "Описание", 
+          val: data.description, 
+          style: '' 
+        },
+        { 
+          label: (map.internal_comment && map.internal_comment.label) ? map.internal_comment.label : "Комментарий", 
+          val: data.internal_comment, 
+          style: 'comment-style' 
+        }
+      ];
+      
+      wideFields.forEach(field => {
+        if (field.val && field.val.toString().trim() !== "") {
+          const block = document.createElement('div');
+          block.className = `hud-wide-text-block ${field.style}`;
+          block.innerHTML = `<div class="hud-label">${field.label}</div><div class="hud-wide-val" style="color: #fff !important; white-space: pre-wrap;">${field.val}</div>`;
+          wideContainer.appendChild(block);
+        }
+      });
+    }
+  }
+
+// ====================================================================
+// ПРОТОКОЛ НАКОПИТЕЛЯ КОРЗИНЫ ДЛЯ СДЕЛКИ (LOCALSTORAGE)
+// ====================================================================
+  function addItemToTradingCart() {
+    if (!currentActiveItemData) return;
+    try {
+      let cart = JSON.parse(localStorage.getItem('crm_active_deal_cart')) || [];
+      const existingItem = cart.find(item => item.id === currentActiveItemData.item_id);
+      
+      if (existingItem) {
+        existingItem.qty += 1;
+      } else {
+        cart.push({
+          id: currentActiveItemData.item_id,
+          name: currentActiveItemData.name,
+          sku: currentActiveItemData.sku,
+          price: currentActiveItemData.price_retail || currentActiveItemData.price_opt || 0,
+          qty: 1
+        });
+      }
+      
+      localStorage.setItem('crm_active_deal_cart', JSON.stringify(cart));
+      alert(`[ SYSTEM ]: Позиция "${currentActiveItemData.name}" успешно интегрирована в текущую сделку!`);
+      google.script.host.close(); 
+    } catch (e) {
+      alert("Ошибка интеграции в корзину: " + e.message);
+    }
+  }
+
+// ====================================================================
+// МГНОВЕННОЕ КОПИРОВАНИЕ ПАСПОРТА ТОВАРА КЛИЕНТУ В БУФЕР ОБМЕНА
+// ====================================================================
+  function shareCatalogItemInfo() {
+    if (!currentActiveItemData) return;
+    const data = currentActiveItemData;
+    const currencySign = data.currency || "₽";
+    
+    let textToCopy = ` Позиция: ${data.name || "Не указано"}\n`; 
+    if (data.brand) textToCopy += ` Бренд: ${data.brand}`; 
+    if (data.sku) textToCopy += ` | Артикул: ${data.sku}`;
+    textToCopy += `\n`;
+    if (data.price_retail) textToCopy += ` Цена розничная: ${data.price_retail} ${currencySign}\n`;
+    
+    if (data.specification && data.specification.toString().trim() !== "") {
+      textToCopy += `\n Спецификация / Состав:\n${data.specification.toString().trim()}\n`;
+    }
+    
+    navigator.clipboard.writeText(textToCopy).then(function() {
+      const cardLoader = document.getElementById('hudCardLoader');
+      if (cardLoader) {
+        cardLoader.style.display = "block";
+        cardLoader.style.color = "#00ff66"; 
+        cardLoader.innerText = "СПЕЦИФИКАЦИЯ СКОПИРОВАНА В БУФЕР ✓";
+        setTimeout(function() { cardLoader.style.display = "none"; }, 3000);
+      }
+    }).catch(function() {
+      alert("Ошибка копирования буфера.");
+    });
+  }
+
+// ====================================================================
+// NEXUS MEDIA CONVERTER: Превращает ссылки оболочки Диска в прямые веб-картинки.
+// ====================================================================
+  function nexusDriveLinkConverter(url) {
+    if (!url) return "";
+    var str = url.toString().trim();
+    if (str === "") return "";
+    
+    // Если это уже прямая ссылка lh3 или внешний сайт (например, Freepik) — не трогаем
+    if (str.includes("googleusercontent.com") || !str.includes("google.com")) {
+      return str;
+    }
+    
+    // Вытаскиваем уникальный ID файла из любых типов ссылок Google Диска
+    var driveIdMatch = str.match(/\/d\/([a-zA-Z0-9_-]{25,50})/) || 
+                      str.match(/[?&]id=([a-zA-Z0-9_-]{25,50})/) ||
+                      str.match(/file\/d\/([a-zA-Z0-9_-]{25,50})/);
+                      
+    if (driveIdMatch && driveIdMatch[1]) {
+      // Чистый, валидный адрес для мгновенного отображения в браузере
+      return "https://lh3.googleusercontent.com/d/" + driveIdMatch[1];
+    }
+    
+    return str;
+  }
+
+// ====================================================================
+// ДВУХХОДОВОЙ ТОГГЛ АРХИВАЦИИ КАРТОЧКИ
+// ====================================================================
+  function triggerHideItem() {
+    const hideBtn = document.getElementById('btnHidePos');
+    if (!hideBtn) return;
+    
+    hideBtn.disabled = true;
+    hideBtn.innerText = "ОБРАБОТКА...";
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideBtn.disabled = false;
+          if (res.success) {
+            const cardLoader = document.getElementById('hudCardLoader');
+            if (cardLoader) {
+              cardLoader.style.display = "block";
+              cardLoader.style.color = res.isArchived ? "#ffaa00" : "#00ff66";
+              cardLoader.innerText = res.msg.toUpperCase();
+            }
+            if (res.isArchived) {
+              hideBtn.innerText = "Отменить архивацию";
+              hideBtn.style.borderColor = "#ffaa00";
+              hideBtn.style.color = "#ffaa00";
+            } else {
+              hideBtn.innerText = "В Архив";
+              hideBtn.style.borderColor = "#1cfdff";
+              hideBtn.style.color = "#1cfdff";
+            }
+          } else {
+            hideBtn.innerText = "В Архив";
+            alert("Ошибка тоггла архива: " + res.msg);
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideBtn.disabled = false;
+          hideBtn.innerText = "В Архив";
+          alert("Критический сбой сетевого моста: " + err.message);
+        })
+        .toggleCatalogItemArchiveStatus(currentId);
+    }
+  }
+</script>
+</body>
+</html>

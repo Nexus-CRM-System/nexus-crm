@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- Подключаем глобальную дизайн-систему (цвета, шрифты, неоновые скроллбары) -->
+  <?!= include('StyleConstants'); ?>
+  
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      background-color: var(--nexus-bg-main);
+      color: #fff;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden !important;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .nexus-main-layout {
+      flex: 1; display: flex; width: 100vw; overflow: hidden; box-sizing: border-box;
+    }
+    .nexus-left-sidebar {
+      width: 320px; flex-shrink: 0; background: #020c12; border-right: 1px solid rgba(28, 253, 255, 0.1); display: flex; flex-direction: column; box-sizing: border-box;
+    }
+
+    /* Правая контентная зона для интерактивных таблиц */
+    .nexus-content-viewport {
+      flex: 1;
+      background: var(--nexus-bg-main);
+      overflow: hidden; 
+      position: relative;
+      box-sizing: border-box;
+      
+      /* ИСПРАВЛЕНО: Даем жесткий нижний отступ всему блоку! 
+         Таблица физически приподнимется, и нижний неоновый скроллбар 
+         полностью вылезет наружу, отлепившись от края экрана */
+      padding-bottom: 8px !important; 
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ПОДКЛЮЧАЕМ ГЛОБАЛЬНЫЙ ВЕРХНИЙ ЧЕРДАК -->
+  <?!= include('HeaderHUD'); ?>
+
+  <!-- ГЛАВНАЯ СПЛИТ-СЕТКА ПРИЛОЖЕНИЯ -->
+  <div class="nexus-main-layout">
+    
+    <!-- ЛЕВЫЙ ПУЛЬТ УПРАВЛЕНИЯ -->
+    <div class="nexus-left-sidebar" style="position: relative;">
+      <!-- Контейнер для динамических пультов (Каталог / Клиенты) -->
+      <div id="webSidebarContainer" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;"></div>
+      
+      <!-- ИСПРАВЛЕНО: Ярлычок подвала перенесен сюда навсегда! Он встроен в постоянный низ сайдбара -->
+      <div style="padding: 10px; box-sizing: border-box; background: #020a0f; border-top: 1px solid rgba(28, 253, 255, 0.05); display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 45px; flex-shrink: 0;">
+        <div id="hudSidebarConsole" style="font-size: 11px; font-family: monospace; color: var(--nexus-neon-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">СИСТЕМА СТАТУСА: OK</div>
+        <button type="button" class="hud-footer-toggle-btn" onclick="toggleNexusBottomBar()">⧊ СТАТУС</button>
+      </div>
+    </div>
+    
+    <!-- ЦЕНТРАЛЬНАЯ РАБОЧАЯ ЗОНА ТАБЛИЦ -->
+    <div class="nexus-content-viewport" id="webTableContainer"></div>
+  </div>
+
+  <!-- ПОДКЛЮЧАЕМ ГЛОБАЛЬНЫЙ ВЫЕЗЖАЮЩИЙ ПОДВАЛ -->
+  <?!= include('FooterUI'); ?>
+
+<!-- ДВИЖОК САЙТА (ЛОГИКА СОРТИРОВКИ, СКРОЛЛА И ПЕРЕКЛЮЧЕНИЙ МОДУЛЕЙ) -->
+<script>
+
+// ====================================================================
+// ГЛОБАЛЬНЫЙ КЭШ ДАННЫХ ДЛЯ МОМЕНТАЛЬНОЙ СОРТИРОВКИ И ПОИСКА
+// ====================================================================
+  let currentCatalogData = null; 
+  let lastSortKey = '';
+  let isSortAsc = true;
+
+// ====================================================================
+// Главный диспетчер модулей сайта NEXUS
+// ====================================================================
+  function switchWebModule(moduleName) {
+    document.querySelectorAll('.hud-tabs .hud-tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (window.event && window.event.target) {
+      window.event.target.classList.add('active');
+    }
+    
+    const sidebarContainer = document.getElementById('webSidebarContainer');
+    const tableContainer = document.getElementById('webTableContainer');
+    
+    if (sidebarContainer) sidebarContainer.innerHTML = '<div style="padding:20px;color:var(--nexus-neon);font-size:11px;font-family:monospace;letter-spacing:1px;text-transform:uppercase;">ЗАГРУЗКА...</div>';
+    if (tableContainer) tableContainer.innerHTML = '<div style="padding:40px;color:var(--nexus-neon-dim);font-size:14px;font-family:monospace;letter-spacing:2px;text-align:center;text-transform:uppercase;">ИНИЦИАЛИЗАЦИЯ NEXUS...</div>';
+    
+    // БРОНЕБОЙНЫЙ МОСТ ГУГЛА
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      
+      // 1. ВОССТАНОВЛЕНО: Запрашиваем у сервера HTML-код левого пульта управления
+      google.script.run
+        .withSuccessHandler(function(htmlContent) {
+           if (sidebarContainer) sidebarContainer.innerHTML = htmlContent;
+        })
+        .withFailureHandler(function(err) {
+           if (sidebarContainer) sidebarContainer.innerHTML = `<div style="padding:20px;color:#ff3333;">Ошибка пульта: ${err.message}</div>`;
+        })
+        .nexusGetModuleHtml(moduleName);
+        
+      // 2. ЕСЛИ ВЫБРАН КАТАЛОГ — ЗАПРАШИВАЕМ ПОТОК ТОВАРОВ ДЛЯ ЦЕНТРАЛЬНОЙ ТАБЛИЦЫ
+      if (moduleName === 'catalog') {
+        google.script.run
+          .withSuccessHandler(function(data) {
+             if (data.error) {
+               tableContainer.innerHTML = `<div style="padding:40px;color:#ff3333;font-family:monospace;">Ошибка бэкенда: ${data.error}</div>`;
+               return;
+             }
+             currentCatalogData = data; 
+             renderCatalogWebTable(data);
+          })
+          .withFailureHandler(function(err) {
+             tableContainer.innerHTML = `<div style="padding:40px;color:#ff3333;">Ошибка сети: ${err.message}</div>`;
+          })
+          .nexusGetCatalogWebTableData();
+      } else if (moduleName === 'clients') {
+         tableContainer.innerHTML = '<div style="padding:40px;color:var(--nexus-neon-dim);font-size:14px;font-family:monospace;text-align:center;">БАЗА ДАННЫХ КЛИЕНТОВ ГОТОВА К ИНТЕГРАЦИИ</div>';
+      }
+    }
+  }
+
+// ====================================================================
+// Функция генерации таблицы с регулировкой ширины колонок и фиксированной высотой строк
+// ====================================================================
+  function renderCatalogWebTable(payload) {
+    const tableContainer = document.getElementById('webTableContainer');
+    if (!tableContainer) return;
+    
+    const headers = payload.headers;
+    const items = payload.items;
+    
+    if (!items || items.length === 0) {
+      tableContainer.innerHTML = '<div style="padding:40px;color:var(--nexus-neon-dim);text-align:center;">Каталог пуст.</div>';
+      return;
+    }
+    
+    // ИСПРАВЛЕНО: Добавили ID "nexusTableScrollWrapper" для жесткого контроля позиции прокрутки
+    let html = '<div id="nexusTableScrollWrapper" style="padding: 0 20px 20px 20px; width: 100%; height: calc(100vh - 60px); overflow: auto; box-sizing: border-box;">';
+
+        
+    // Подключаем глобальные шрифты из StyleConstants через переменные var(--nexus-table-...)
+    html += '<table id="nexusCatalogWebTable" style="width:100%; min-width: 3400px; table-layout: fixed; border-collapse: collapse; background:#020a0f; color:#fff; font-size: var(--nexus-table-td-size); text-align:left; border: 1px solid rgba(28,253,255,0.1);">';
+    
+    // ШАПКА ТАБЛИЦЫ (Размер шрифта управляется из StyleConstants)
+    html += '<thead style="background:#04141d; color:var(--nexus-neon); font-family:monospace; font-size: var(--nexus-table-th-size); font-weight:bold; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid var(--nexus-neon-dim); position: sticky; top: 0; z-index: 10;">';
+    html += '<tr>';
+    
+    const sortedKeys = Object.keys(headers).sort((a, b) => headers[a].column - headers[b].column);
+    
+    sortedKeys.forEach(key => {
+      let width = '160px'; 
+      if (key === 'name') width = '420px'; // Немного расширили наименование
+      if (key === 'id') width = '75px';
+      if (key === 'stock_qty' || key === 'currency' || key === 'warehouse_cell') width = '110px';
+      
+      html += `<th style="padding: 0; border: 1px solid rgba(28,253,255,0.08); width: ${width}; position: relative; font-size: var(--nexus-table-th-size); font-weight: bold; white-space: nowrap; overflow: visible; user-select: none; background: #04141d; height: 54px;">`;
+      
+      // ИСПРАВЛЕНО: Теперь для абсолютно ВСЕХ колонок маркеры строго [А-Я] и [Я-А]
+      let directionMarker = '&nbsp;'; 
+      if (key === lastSortKey) {
+        directionMarker = isSortAsc ? '[А-Я] ▲' : '[Я-А] ▼';
+      }
+      
+      const isCurrentSort = (key === lastSortKey);
+      
+      html += `<div onclick="sortCatalogByWebKey('${key}')" 
+                    onmouseover="this.style.background='rgba(28,253,255,0.06)';" 
+                    onmouseout="this.style.background='transparent';" 
+                    style="padding: 6px 12px; height: 100%; width: 100%; box-sizing: border-box; cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; color: var(--nexus-neon-dim); background: transparent;">`;
+      
+      // Только маркер сортировки (золотой)
+      html += `<div style="font-size: 11px; font-family: monospace; letter-spacing: 1px; font-weight: 900; margin-bottom: 2px; color: ${isCurrentSort ? '#ffaa00' : 'rgba(28,253,255,0.05)'}; text-shadow: ${isCurrentSort ? '0 0 8px #ffaa00' : 'none'};">${directionMarker}</div>`;
+      
+      // Название колонки (всегда бирюзовое)
+      html += `<div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; color: var(--nexus-neon-dim);">${headers[key].label}</div>`;
+      
+      html += `</div>`; 
+      html += `<div class="col-resizer" onmousedown="initColResize(event)" ondblclick="autoFitColumn(event)" style="position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; z-index: 5; user-select: none;"></div>`;
+      html += `</th>`;
+    });
+    html += '</tr></thead>';
+    
+    // СТРОКИ ДАННЫХ (Размер шрифта управляется из StyleConstants)
+    html += '<tbody>';
+    items.forEach(item => {
+      const isService = item.record_type === 'Услуга' || item.record_type === 'Услуги';
+      const stockVal = Number(item.stock_qty);
+      const stockColor = (!isService && stockVal <= 0) ? '#ff3333' : '#fff';
+      
+      html += `<tr style="border-bottom:1px solid rgba(28,253,255,0.05); height: 28px; transition:background 0.15s; font-size: var(--nexus-table-td-size);" onmouseover="this.style.background='rgba(28,253,255,0.04)'" onmouseout="this.style.background='transparent'">`;
+      
+      sortedKeys.forEach(key => {
+        let val = item[key];
+        let cellStyle = 'padding:5px 12px; border:1px solid rgba(28,253,255,0.05); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+        
+        if (val instanceof Date) val = val.toLocaleDateString('ru-RU');
+        if (val === null || val === undefined || val === '') val = '—';
+        
+      // БАЗОВЫЙ НАБОР СТИЛЕЙ ЯЧЕЙКИ
+      sortedKeys.forEach(key => {
+        let val = item[key];
+        let cellStyle = 'padding:5px 12px; border:1px solid rgba(28,253,255,0.05); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+        
+        if (val instanceof Date) val = val.toLocaleDateString('ru-RU');
+        if (val === null || val === undefined || val === '') val = '—';
+        
+        // ====================================================================
+        // КЛИЕНТСКИЙ КОНТУР РАСЦВЕТКИ СИСТЕМНЫХ БЛОКОВ NEXUS
+        // ====================================================================
+        
+        // 1. Блок Системных Кодов (ID, Тип, Артикулы) — строгий глубокий сине-серый тон
+        if (key === 'id' || key === 'sku' || key === 'record_type' || key === 'code_value') {
+          cellStyle += 'background: rgba(28, 253, 255, 0.015);'; 
+          if (key === 'id') cellStyle += 'font-family:monospace; color:var(--nexus-neon-dim);';
+          if (key === 'record_type') cellStyle += 'color:#8ab4f8;';
+        }
+        
+        // 2. Блок Финансовых Данных (Закупка, Опт, Розница) — дорогой благородный темный тон
+        if (key === 'price_buy' || key === 'price_wholesale' || key === 'price_retail') {
+          cellStyle += 'background: rgba(255, 170, 0, 0.01); text-align:right;';
+          
+          if (key === 'price_retail') {
+            cellStyle += 'font-weight:bold; color:#ffaa00;';
+          } else {
+            cellStyle += 'color:#777;';
+          }
+          if (!isNaN(parseFloat(val)) && val !== '—') val = Number(val).toFixed(2);
+        }
+        
+        // 3. Блок Складских Остатков (Количество, Ячейка хранения) — контрастный оттенок
+        if (key === 'stock_qty' || key === 'warehouse_cell') {
+          cellStyle += 'background: rgba(46, 204, 113, 0.01); text-align:center;';
+          if (key === 'stock_qty') {
+            cellStyle += `font-weight:bold; color:${stockColor};`;
+            if (isService) val = '—';
+          }
+          if (key === 'warehouse_cell') cellStyle += 'color: var(--nexus-neon); font-family:monospace;';
+        }
+        
+        html += `<td style="${cellStyle}" title="${val !== '—' ? val : ''}">${val}</td>`;
+      });
+
+        if (key === 'id') cellStyle += 'font-family:monospace; color:var(--nexus-neon-dim);';
+        if (key === 'record_type') cellStyle += 'color:#8ab4f8;';
+        
+        // ИСПРАВЛЕНО: Полностью удалили принудительную склейку рублей! Выводим только ГОЛЫЕ ЧИСЛА с копейками.
+        if (key === 'price_retail') {
+          cellStyle += 'text-align:right; font-weight:bold; color:#ffaa00;';
+          if (!isNaN(parseFloat(val)) && val !== '—') val = Number(val).toFixed(2);
+        }
+        if (key === 'price_buy' || key === 'price_wholesale') {
+          cellStyle += 'text-align:right; color:#777;';
+          if (!isNaN(parseFloat(val)) && val !== '—') val = Number(val).toFixed(2);
+        }
+        if (key === 'stock_qty') {
+          cellStyle += `text-align:center; font-weight:bold; color:${stockColor};`;
+          if (isService) val = '—';
+        }
+        
+        html += `<td style="${cellStyle}" title="${val !== '—' ? val : ''}">${val}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    
+    tableContainer.innerHTML = html;
+  }
+
+  // ====================================================================
+  // ВЕБ-ДВИЖОК РЕГУЛИРОВКИ ШИРИНЫ КОЛОНОК (RESIZE)
+  // ====================================================================
+  let startX, startWidth, thEl;
+
+  function initColResize(e) {
+    e.preventDefault();
+    thEl = e.target.parentElement;
+    startX = e.clientX;
+    startWidth = thEl.offsetWidth;
+    
+    document.addEventListener('mousemove', doColResize);
+    document.addEventListener('mouseup', stopColResize);
+    // Подсвечиваем границу неоном во время перетаскивания
+    e.target.style.background = 'var(--nexus-neon)';
+  }
+
+  // ====================================================================
+  // 
+  // ====================================================================
+  function doColResize(e) {
+    const nextWidth = startWidth + (e.clientX - startX);
+    if (nextWidth > 40) { // Минимальная защитная ширина колонки
+      thEl.style.width = nextWidth + 'px';
+    }
+  }
+
+  // ====================================================================
+  // 
+  // ====================================================================
+  function stopColResize(e) {
+    document.removeEventListener('mousemove', doColResize);
+    document.removeEventListener('mouseup', stopColResize);
+    
+    // Сбрасываем подсвеченный фон ползунка обратно на прозрачный
+    const resizers = document.querySelectorAll('.col-resizer');
+    resizers.forEach(r => r.style.background = 'transparent');
+  }
+
+  // ====================================================================
+  // Двойной клик — автоподбор ширины под контент ячейки
+  // ====================================================================
+  function autoFitColumn(e) {
+    e.preventDefault();
+    const th = e.target.parentElement;
+    const cellIndex = th.cellIndex;
+    const table = document.getElementById('nexusCatalogWebTable');
+    if (!table) return;
+    
+    let maxWidth = 70; // Стартовый порог ширины
+    
+    // Временный невидимый элемент для замера шрифта
+    const dummy = document.createElement('span');
+    dummy.style.font = window.getComputedStyle(th).font;
+    dummy.style.visibility = 'hidden';
+    dummy.style.whiteSpace = 'nowrap';
+    dummy.style.position = 'absolute';
+    document.body.appendChild(dummy);
+    
+    // Замеряем длину самого названия колонки в шапке
+    dummy.textContent = th.textContent.trim();
+    if (dummy.offsetWidth + 35 > maxWidth) {
+      maxWidth = dummy.offsetWidth + 35;
+    }
+    
+    // СВЕРХТОЧНЫЙ СКАНИРУЮЩИЙ ДВИЖОК: Игнорирует пробелы, прочерки и фантомные символы
+    const scanLimit = table.rows.length > 100 ? 100 : table.rows.length;
+    for (let i = 1; i < scanLimit; i++) {
+      const cell = table.rows[i].cells[cellIndex];
+      if (cell) {
+        // Вырезаем вообще все пробелы, переносы строк и спецсимволы для идеального замера контента
+        var text = cell.textContent.trim().replace(/\u00A0/g, '').replace(/\s+/g, '');
+        
+        // КРИТИЧЕСКИЙ ФИЛЬТР: если в ячейке сидит прочерк, один пробел или пустота — полностью её игнорируем!
+        if (text === '—' || text === '' || text.length <= 1) continue; 
+        
+        dummy.textContent = cell.textContent.trim(); // Замеряем оригинальный красивый текст
+        if (dummy.offsetWidth + 35 > maxWidth) {
+          maxWidth = dummy.offsetWidth + 35; // Добавляем комфортный отступ 35px
+        }
+      }
+    }
+    document.body.removeChild(dummy);
+    
+    // Защитный коммерческий потолок: колонка не может стать шире 550px при автоподборе
+    if (maxWidth > 550) maxWidth = 550;
+    
+    th.style.width = maxWidth + 'px';
+  }
+
+// ====================================================================
+// Стартовый автозапуск при открытии сайта
+// ====================================================================
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      switchWebModule('catalog');
+    }, 100);
+  });
+
+  // ====================================================================
+  // УМНЫЙ ВЕБ-ДВИЖОК СОРТИРОВКИ NEXUS: Моментальный автоподбор типов
+  // ====================================================================
+  function sortCatalogByWebKey(key) {
+    if (!currentCatalogData || !currentCatalogData.items) return;
+    
+    // 1. ЗАПОМИНАЕМ ТЕКУЩУЮ ПОЗИЦИЮ СКРОЛЛА ПОЛЬЗОВАТЕЛЯ
+    const wrapper = document.getElementById('nexusTableScrollWrapper');
+    const currentScrollLeft = wrapper ? wrapper.scrollLeft : 0;
+    const currentScrollTop = wrapper ? wrapper.scrollTop : 0;
+    
+    if (lastSortKey === key) {
+      isSortAsc = !isSortAsc;
+    } else {
+      lastSortKey = key;
+      isSortAsc = true;
+    }
+    
+    const isNumeric = (key === 'id' || key === 'price_retail' || key === 'price_buy' || key === 'price_wholesale' || key === 'stock_qty' || key === 'weight_volume');
+    
+    currentCatalogData.items.sort((a, b) => {
+      let valA = a[key];
+      let valB = b[key];
+      
+      if (isNumeric) {
+        let numA = parseFloat(a[key].toString().replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+        let numB = parseFloat(b[key].toString().replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+        return isSortAsc ? numA - numB : numB - numA;
+      }
+      
+      valA = valA ? valA.toString().toLowerCase() : '';
+      valB = valB ? valB.toString().toLowerCase() : '';
+      
+      if (valA < valB) return isSortAsc ? -1 : 1;
+      if (valA > valB) return isSortAsc ? 1 : -1;
+      return 0;
+    });
+    
+    // 2. ПЕРЕРИСОВЫВАЕМ ТАБЛИЦУ
+    renderCatalogWebTable(currentCatalogData);
+    
+    // 3. МГНОВЕННО ВОЗВРАЩАЕМ ПОЛЗУНОК СКРОЛЛА В ТУ ЖЕ ТОЧКУ ЭКРАНА!
+    const newWrapper = document.getElementById('nexusTableScrollWrapper');
+    if (newWrapper) {
+      newWrapper.scrollLeft = currentScrollLeft;
+      newWrapper.scrollTop = currentScrollTop;
+    }
+  }
+
+  // ====================================================================
+  // ВЕБ-ДВИЖОК ПОДВАЛА: Синхронное сжатие таблицы и приподнятие скролла
+  // ====================================================================
+  function toggleNexusBottomBar() {
+    const bottomBar = document.getElementById('nexusGlobalBottomBar');
+    const scrollWrapper = document.getElementById('nexusTableScrollWrapper');
+    if (!bottomBar) return;
+    
+    bottomBar.classList.toggle('open');
+    
+    if (bottomBar.classList.contains('open')) {
+      // ИСПРАВЛЕНО: Принудительно уменьшаем высоту контейнера таблицы, приподнимая скроллбар вверх!
+      if (scrollWrapper) {
+        scrollWrapper.style.height = 'calc(100vh - 100px)'; 
+        scrollWrapper.style.paddingBottom = '4px'; // Те самые 2-4px защитного зазора под скролл
+      }
+      
+      // Накачиваем подвал живыми данными из кэша
+      if (currentCatalogData && currentCatalogData.items) {
+        const items = currentCatalogData.items;
+        document.getElementById('statTotalItems').textContent = items.length;
+        
+        let inStockCount = 0;
+        items.forEach(item => {
+          if (item.record_type !== 'Услуга' && item.record_type !== 'Услуги' && parseFloat(item.stock_qty) > 0) {
+            inStockCount++;
+          }
+        });
+        document.getElementById('statInStock').textContent = inStockCount;
+      }
+    } else {
+      // Если подвал закрылся — возвращаем таблице полную высоту экрана
+      if (scrollWrapper) {
+        scrollWrapper.style.height = 'calc(100vh - 60px)';
+        scrollWrapper.style.paddingBottom = '20px';
+      }
+    }
+  }
+
+
+</script>
+</body>
+</html>
